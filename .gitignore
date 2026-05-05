@@ -1,0 +1,21 @@
+# Ignore .config folder
+.config/
+
+# Python virtual environment
+.venv/
+
+# Python bytecode cache
+__pycache__/
+*.pyc
+
+# Pytest cache
+.pytest_cache/
+
+# Pytest config
+pytest.ini
+
+# macOS
+.DS_Store
+
+# Local config (contains real API keys)
+config.json
