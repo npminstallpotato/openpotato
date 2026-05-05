@@ -68,3 +68,7 @@ Edit `config.json` with your settings:
 ## Requirements
 
 - **Python 3.10+**
+
+---
+
+[MIT License](LICENSE) · [Contributing](CONTRIBUTING.md)
