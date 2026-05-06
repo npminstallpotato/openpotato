@@ -108,18 +108,7 @@ async def query_llm(message: str, client: httpx.AsyncClient, config: dict) -> di
 
     if resp.status_code != 200:
         logger.error("LLM provider error: %s %s", resp.status_code, resp.text[:300])
-        return {
-            "id": "error",
-            "type": "message",
-            "role": "assistant",
-            "content": [
-                {
-                    "type": "text",
-                    "text": f"Error: LLM provider returned {resp.status_code}.",
-                }
-            ],
-            "stop_reason": "error",
-        }
+        raise HTTPException(status_code=502, detail=f"LLM provider returned {resp.status_code}.")
 
     return resp.json()
 
