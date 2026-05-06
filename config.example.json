@@ -1,8 +1,7 @@
 {
   "INTERNAL_SECRET": "igotyuandme",
-  "LLM_PORT": "8002",
-  "LLM_HOST": "127.0.0.1",
+  "HOST": "127.0.0.1",
   "GATEWAY_PORT": "8000",
-  "GATEWAY_HOST": "127.0.0.1",
+  "LLM_PORT": "8002",
   "UTIL_PORT": "8001"
 }

@@ -24,10 +24,9 @@ After running `./install.sh`, two files control the system:
 | Key | Description |
 |-----|-------------|
 | `INTERNAL_SECRET` | Shared secret between Gateway and LLM services |
-| `LLM_PORT` | Port the LLM service runs on |
-| `LLM_HOST` | Host the LLM service binds to (default: `127.0.0.1`) |
+| `HOST` | Host all services bind to (default: `127.0.0.1`) |
 | `GATEWAY_PORT` | Port the Gateway serves the UI on |
-| `GATEWAY_HOST` | Host the Gateway binds to (default: `127.0.0.1`) |
+| `LLM_PORT` | Port the LLM service runs on |
 | `UTIL_PORT` | Port the Util (settings) service runs on |
 
 ### `settings.json` — LLM provider (live-reloaded, no restart needed)

@@ -64,7 +64,7 @@ directly into a Python dict.
 
 ### Config vs Settings
 
-- **`config.json`** (infrastructure/secrets) — read once at module level. Ports, hosts, internal secret. Changing requires server restart.
+- **`config.json`** (infrastructure/secrets) — read once at module level. Ports, host, internal secret. Changing requires server restart.
 - **`settings.json`** (LLM provider config) — live-reloaded on every request via `load_settings()`. Edit the file and the next request picks up changes immediately. Pattern:
   ```python
   def load_settings():

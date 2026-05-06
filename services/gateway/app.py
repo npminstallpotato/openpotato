@@ -27,13 +27,12 @@ if CONFIG_PATH.exists():
 else:
     logger.warning("config.json not found at %s — using defaults", CONFIG_PATH)
 
+HOST = _config.get("HOST", "127.0.0.1")
 GATEWAY_PORT = int(_config.get("GATEWAY_PORT", "8000"))
-GATEWAY_HOST = _config.get("GATEWAY_HOST", "127.0.0.1")
-LLM_HOST = _config.get("LLM_HOST", "127.0.0.1")
 LLM_PORT = int(_config.get("LLM_PORT", "8002"))
-LLM_BASE = f"http://{LLM_HOST}:{LLM_PORT}"
+LLM_BASE = f"http://{HOST}:{LLM_PORT}"
 UTIL_PORT = int(_config.get("UTIL_PORT", "8001"))
-UTIL_BASE = f"http://{LLM_HOST}:{UTIL_PORT}"
+UTIL_BASE = f"http://{HOST}:{UTIL_PORT}"
 INTERNAL_SECRET = _config.get("INTERNAL_SECRET", "")
 
 
@@ -68,13 +67,13 @@ app = FastAPI(
 
 # ── Required config validation dependency ──────────────────────────────────
 
-GATEWAY_REQUIRED_KEYS = ["LLM_HOST", "LLM_PORT"]
+GATEWAY_REQUIRED_KEYS = ["LLM_PORT"]
 
 
 def check_gateway_config():
     """FastAPI dependency: verify the Gateway has the config it needs to proxy.
 
-    LLM_HOST and LLM_PORT are required for the proxy to know where the LLM
+    LLM_PORT is required for the proxy to know where the LLM
     service lives.  If config.json is missing or incomplete, returns 503.
     """
     config = {}
@@ -181,4 +180,4 @@ async def spa_or_static(path: str):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app:app", host=GATEWAY_HOST, port=GATEWAY_PORT, reload=True)
+    uvicorn.run("app:app", host=HOST, port=GATEWAY_PORT, reload=True)

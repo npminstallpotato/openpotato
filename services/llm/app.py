@@ -29,6 +29,7 @@ else:
     logger.warning("config.json not found at %s — using defaults", CONFIG_PATH)
 
 PORT = int(_config.get("LLM_PORT", "8002"))
+HOST = _config.get("HOST", "127.0.0.1")
 INTERNAL_SECRET = _config.get("INTERNAL_SECRET", "")
 
 # ── Settings from settings.json (live-reloaded on every request) ───────────
@@ -165,4 +166,4 @@ async def chat_get(
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app:app", host="127.0.0.1", port=PORT, reload=True)
+    uvicorn.run("app:app", host=HOST, port=PORT, reload=True)

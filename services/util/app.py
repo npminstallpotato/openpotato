@@ -23,6 +23,7 @@ else:
     logger.warning("config.json not found — using defaults")
 
 PORT = int(_config.get("UTIL_PORT", "8001"))
+HOST = _config.get("HOST", "127.0.0.1")
 INTERNAL_SECRET = _config.get("INTERNAL_SECRET", "")
 
 # ── Settings path ──────────────────────────────────────────────────────────
@@ -114,4 +115,4 @@ async def put_settings(body: SettingsUpdate):
 
 if __name__ == "__main__":
     import uvicorn
-    uvicorn.run("app:app", host="127.0.0.1", port=PORT, reload=True)
+    uvicorn.run("app:app", host=HOST, port=PORT, reload=True)
