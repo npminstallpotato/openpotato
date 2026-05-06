@@ -1,7 +1,6 @@
 """FastAPI Gateway — serves UI and proxies API requests to the LLM service."""
 
 import json
-import os
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -15,24 +14,24 @@ from fastapi.staticfiles import StaticFiles
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ── Config from config.json, falling back to env vars ──────────────────────
+# ── Config from config.json (initial load for auth/proxy settings) ─────────
 
-_config_path = Path(__file__).resolve().parent.parent / "config.json"
-if _config_path.exists():
-    with open(_config_path) as _f:
-        for _k, _v in json.load(_f).items():
-            if _k not in os.environ:  # don't override existing env vars
-                os.environ[_k] = str(_v)
-    logger.info("Loaded config from %s", _config_path)
+CONFIG_PATH = Path(__file__).resolve().parent.parent.parent / "config.json"
+
+_config = {}
+if CONFIG_PATH.exists():
+    with open(CONFIG_PATH) as f:
+        _config = json.load(f)
+    logger.info("Config loaded from %s", CONFIG_PATH)
 else:
-    logger.warning("config.json not found at %s — using env vars / defaults", _config_path)
+    logger.warning("config.json not found at %s — using defaults", CONFIG_PATH)
 
-GATEWAY_PORT = int(os.getenv("GATEWAY_PORT", "8000"))
-GATEWAY_HOST = os.getenv("GATEWAY_HOST", "127.0.0.1")
-LLM_HOST = os.getenv("LLM_HOST", "127.0.0.1")
-LLM_PORT = int(os.getenv("LLM_PORT", "8002"))
+GATEWAY_PORT = int(_config.get("GATEWAY_PORT", "8000"))
+GATEWAY_HOST = _config.get("GATEWAY_HOST", "127.0.0.1")
+LLM_HOST = _config.get("LLM_HOST", "127.0.0.1")
+LLM_PORT = int(_config.get("LLM_PORT", "8002"))
 LLM_BASE = f"http://{LLM_HOST}:{LLM_PORT}"
-GATEWAY_API_KEY = os.getenv("GATEWAY_API_KEY", "")
+GATEWAY_API_KEY = _config.get("GATEWAY_API_KEY", "")
 
 UI_DIR = Path(__file__).resolve().parent / "ui"
 
@@ -118,19 +117,24 @@ async def proxy(path: str, request: Request, base_url: str) -> Response:
         )
 
 
-# ── Config endpoint (for UI) ───────────────────────────────────────────────
+# ── Config endpoint (for UI — live-reloads config.json) ────────────────────
 
 @app.get("/api/config")
 async def get_config():
     """Return the current config (API key redacted)."""
+    config = {}
+    if CONFIG_PATH.exists():
+        with open(CONFIG_PATH) as f:
+            config = json.load(f)
+
     return {
         "llm": {
-            "model": os.getenv("LLM_MODEL", "deepseek-v4-flash"),
-            "base_url": os.getenv("LLM_BASE_URL", "https://api.deepseek.com/anthropic"),
+            "model": config.get("LLM_MODEL", "deepseek-v4-flash"),
+            "base_url": config.get("LLM_BASE_URL", "https://api.deepseek.com/anthropic"),
             "api_key": "***",
         },
-        "llm_port": LLM_PORT,
-        "gateway_port": GATEWAY_PORT,
+        "llm_port": int(config.get("LLM_PORT", "8002")),
+        "gateway_port": int(config.get("GATEWAY_PORT", "8000")),
     }
 
 

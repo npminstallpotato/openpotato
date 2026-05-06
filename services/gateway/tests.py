@@ -1,13 +1,27 @@
 """Tests for the Gateway microservice."""
 
-import os
-
-# Disable auth + API key for tests so they don't depend on .env
-os.environ["GATEWAY_API_KEY"] = ""
-os.environ["LLM_API_KEY"] = ""
+import json
+from pathlib import Path
 
 from fastapi.testclient import TestClient
 from app import app
+
+# Read the actual API key from config.json so tests stay in sync
+_config_path = Path(__file__).resolve().parent.parent.parent / "config.json"
+if _config_path.exists():
+    with open(_config_path) as f:
+        _cfg = json.load(f)
+else:
+    _cfg = {}
+API_KEY = _cfg.get("GATEWAY_API_KEY", "")
+
+
+def _api(headers=None, **kwargs):
+    """Helper: add API key header to requests that need it."""
+    h = headers or {}
+    if "X-API-Key" not in h:
+        h["X-API-Key"] = API_KEY
+    return h
 
 
 def test_static_index():
@@ -37,7 +51,7 @@ def test_static_js():
 def test_config_endpoint():
     """GET /api/config returns config with API key redacted."""
     with TestClient(app) as client:
-        response = client.get("/api/config")
+        response = client.get("/api/config", headers=_api())
         assert response.status_code == 200
         data = response.json()
         assert "llm" in data
@@ -49,7 +63,7 @@ def test_config_endpoint():
 def test_proxy_llm_unavailable():
     """Proxying to LLM returns 502 when LLM is not running."""
     with TestClient(app) as client:
-        response = client.get("/api/llm/health")
+        response = client.get("/api/llm/health", headers=_api())
         assert response.status_code == 502
         data = response.json()
         assert "error" in data
@@ -57,15 +71,7 @@ def test_proxy_llm_unavailable():
 
 def test_auth_required():
     """API routes reject requests without the correct X-API-Key."""
-    # Test with key set via env
-    os.environ["GATEWAY_API_KEY"] = "test-key"
-    # Reimport app module to pick up new env
-    import importlib
-    import app as gateway_app
-    importlib.reload(gateway_app)
-    app2 = gateway_app.app
-
-    with TestClient(app2) as client:
+    with TestClient(app) as client:
         # No key → 401
         resp = client.get("/api/config")
         assert resp.status_code == 401
@@ -75,12 +81,9 @@ def test_auth_required():
         assert resp.status_code == 401
 
         # Correct key → 200
-        resp = client.get("/api/config", headers={"X-API-Key": "test-key"})
+        resp = client.get("/api/config", headers={"X-API-Key": API_KEY})
         assert resp.status_code == 200
 
         # Static files still open without key
         resp = client.get("/")
         assert resp.status_code == 200
-
-    # Reset for other tests
-    os.environ["GATEWAY_API_KEY"] = ""

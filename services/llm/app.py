@@ -5,7 +5,6 @@ Returns the full Anthropic response body.
 """
 
 import json
-import os
 import logging
 from contextlib import asynccontextmanager
 from pathlib import Path
@@ -17,22 +16,24 @@ from pydantic import BaseModel
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ── Config from config.json, falling back to env vars ──────────────────────
+# ── Config from config.json (live-reloaded on every request) ───────────────
 
-_config_path = Path(__file__).resolve().parent.parent / "config.json"
-if _config_path.exists():
-    with open(_config_path) as _f:
-        for _k, _v in json.load(_f).items():
-            if _k not in os.environ:  # don't override existing env vars
-                os.environ[_k] = str(_v)
-    logger.info("Loaded config from %s", _config_path)
+CONFIG_PATH = Path(__file__).resolve().parent.parent.parent / "config.json"
+
+def load_config():
+    """Read config.json and return as dict. Returns {} on error."""
+    try:
+        with open(CONFIG_PATH) as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
+
+PORT = int(load_config().get("LLM_PORT", "8002"))
+
+if CONFIG_PATH.exists():
+    logger.info("Config loaded from %s", CONFIG_PATH)
 else:
-    logger.warning("config.json not found at %s — using env vars / defaults", _config_path)
-
-API_KEY = os.getenv("LLM_API_KEY", "")
-MODEL = os.getenv("LLM_MODEL", "deepseek-v4-flash")
-BASE_URL = os.getenv("LLM_BASE_URL", "https://api.deepseek.com/anthropic")
-PORT = int(os.getenv("LLM_PORT", "8002"))
+    logger.warning("config.json not found at %s — using defaults", CONFIG_PATH)
 
 # ── Lifespan — shared HTTP client ──────────────────────────────────────────
 
@@ -41,7 +42,7 @@ async def lifespan(application: FastAPI):
     """Create a shared HTTP client for the app's lifetime."""
     async with httpx.AsyncClient(timeout=60.0) as client:
         application.state.client = client
-        logger.info("LLM service ready — model=%s", MODEL)
+        logger.info("LLM service ready — port=%s", PORT)
         yield
 
 
@@ -61,7 +62,12 @@ class ChatRequest(BaseModel):
 
 async def query_llm(message: str, client: httpx.AsyncClient) -> dict:
     """Send message to LLM provider and return the full Anthropic response."""
-    if not API_KEY:
+    config = load_config()
+    api_key = config.get("LLM_API_KEY", "")
+    model = config.get("LLM_MODEL", "deepseek-v4-flash")
+    base_url = config.get("LLM_BASE_URL", "https://api.deepseek.com/anthropic")
+
+    if not api_key:
         logger.warning("LLM_API_KEY not set — returning placeholder")
         return {
             "id": "placeholder",
@@ -72,7 +78,7 @@ async def query_llm(message: str, client: httpx.AsyncClient) -> dict:
                     "type": "text",
                     "text": (
                         f'[Placeholder] Received: "{message}". '
-                        "Set LLM_API_KEY in .env to connect a real provider."
+                        "Set LLM_API_KEY in config.json to connect a real provider."
                     ),
                 }
             ],
@@ -80,13 +86,13 @@ async def query_llm(message: str, client: httpx.AsyncClient) -> dict:
         }
 
     resp = await client.post(
-        f"{BASE_URL}/messages",
+        f"{base_url}/messages",
         headers={
-            "x-api-key": API_KEY,
+            "x-api-key": api_key,
             "anthropic-version": "2023-06-01",
         },
         json={
-            "model": MODEL,
+            "model": model,
             "messages": [{"role": "user", "content": message}],
             "max_tokens": 4096,
         },
@@ -112,7 +118,9 @@ async def query_llm(message: str, client: httpx.AsyncClient) -> dict:
 
 @app.get("/health")
 async def health():
-    return {"status": "ok", "model": MODEL}
+    config = load_config()
+    model = config.get("LLM_MODEL", "deepseek-v4-flash")
+    return {"status": "ok", "model": model}
 
 
 @app.post("/chat")

@@ -24,7 +24,7 @@ OpenPotato/
 ├── LICENSE              # MIT license
 ├── README.md
 ├── requirements.txt
-├── install.sh           # Setup script (venv + deps + .env)
+├── install.sh           # Setup script (venv + deps + config.json)
 ├── start.sh             # Launch services
 └── stop.sh              # Stop services
 ```
