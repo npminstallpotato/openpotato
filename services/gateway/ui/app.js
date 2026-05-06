@@ -36,12 +36,6 @@ let messageCount = 0;
 
 /* ── Settings / Config ────────────────────────────────────────────────── */
 
-const DEFAULT_SETTINGS = {
-  LLM_MODEL: "deepseek-v4-flash",
-  LLM_BASE_URL: "https://api.deepseek.com/anthropic",
-  LLM_API_KEY: "",
-};
-
 const settingsForm = document.getElementById("settings-form");
 const settingsStatus = document.getElementById("settings-status");
 const saveBtn = document.getElementById("settings-save-btn");
@@ -303,24 +297,39 @@ async function restoreDefaults() {
 
   restoreBtn.disabled = true;
   restoreBtn.textContent = "Restoring…";
-  settingsStatus.textContent = "";
+  settingsStatus.textContent = "Restoring…";
   settingsStatus.className = "settings-status";
 
   try {
+    // Fetch defaults from settings.example.json via Util API
+    const defResp = await fetch("/api/settings/defaults");
+    if (!defResp.ok) {
+      settingsStatus.textContent = "Error fetching defaults";
+      settingsStatus.className = "settings-status error";
+      return;
+    }
+    const defaults = await defResp.json();
+
+    // Restore by saving the defaults
     const resp = await fetch("/api/settings", {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(DEFAULT_SETTINGS),
+      body: JSON.stringify(defaults),
     });
     if (!resp.ok) {
       const err = await resp.json().catch(() => ({}));
       settingsStatus.textContent = err.detail || `Error restoring (${resp.status})`;
       settingsStatus.className = "settings-status error";
-      restoreBtn.disabled = false;
-      restoreBtn.textContent = "Restore Defaults";
       return;
     }
-    await loadSettings();
+
+    // Update form fields from fetched defaults
+    modelInput.value = defaults.LLM_MODEL || "";
+    baseUrlInput.value = defaults.LLM_BASE_URL || "";
+    apiKeyInput.value = defaults.LLM_API_KEY || "";
+    initialSettings = getCurrentSettings();
+    updateSaveButton();
+
     settingsStatus.textContent = "Defaults restored";
     settingsStatus.className = "settings-status success";
   } catch {

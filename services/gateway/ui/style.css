@@ -715,6 +715,7 @@ body {
   align-items: center;
   justify-content: center;
   padding: 9px 18px;
+  min-width: 120px;
   border: none;
   border-radius: var(--radius-sm);
   font-size: 13px;

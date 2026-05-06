@@ -29,6 +29,7 @@ INTERNAL_SECRET = _config.get("INTERNAL_SECRET", "")
 # ── Settings path ──────────────────────────────────────────────────────────
 
 SETTINGS_PATH = Path("settings.json")
+DEFAULTS_PATH = Path("settings.example.json")
 
 SETTINGS_KEYS = ["LLM_API_KEY", "LLM_MODEL", "LLM_BASE_URL"]
 
@@ -111,6 +112,17 @@ async def put_settings(body: SettingsUpdate):
     current.update(body.model_dump(exclude_unset=True))
     save_settings(current)
     return {"status": "ok", "message": "Settings saved"}
+
+
+@app.get("/api/settings/defaults")
+async def get_default_settings():
+    """Return default settings from settings.example.json."""
+    try:
+        with open(DEFAULTS_PATH) as f:
+            defaults = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        defaults = dict(DEFAULT_SETTINGS)
+    return defaults
 
 
 if __name__ == "__main__":

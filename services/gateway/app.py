@@ -160,6 +160,12 @@ async def proxy_settings(request: Request):
     return await proxy("api/settings", request, UTIL_BASE)
 
 
+@app.get("/api/settings/defaults")
+async def proxy_settings_defaults(request: Request):
+    """Proxy default settings request to the Util microservice."""
+    return await proxy("api/settings/defaults", request, UTIL_BASE)
+
+
 # ── Static files + SPA routing ─────────────────────────────────────────
 
 @app.get("/{path:path}")
