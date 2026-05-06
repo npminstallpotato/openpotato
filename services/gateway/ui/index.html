@@ -43,9 +43,14 @@
 
     <!-- ── Main ───────────────────────────────────────────────── -->
     <main id="main">
-      <button class="theme-btn" id="theme-btn" aria-label="Toggle theme">
-        <span class="theme-icon">🌙</span>
-      </button>
+      <label class="theme-toggle" id="theme-toggle" aria-label="Toggle theme">
+        <input type="checkbox" id="theme-checkbox" hidden>
+        <span class="toggle-track">
+          <span class="toggle-icon toggle-icon-dark">🌙</span>
+          <span class="toggle-knob"></span>
+          <span class="toggle-icon toggle-icon-light">☀️</span>
+        </span>
+      </label>
 
       <!-- ── Chat View ──────────────────────────────────────── -->
       <section id="view-chat" class="view active">

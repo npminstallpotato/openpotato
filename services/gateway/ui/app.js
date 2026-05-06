@@ -3,9 +3,9 @@
 function setTheme(theme) {
   document.documentElement.setAttribute("data-theme", theme);
   localStorage.setItem("theme", theme);
-  const icon = document.querySelector(".theme-icon");
-  if (icon) {
-    icon.textContent = theme === "dark" ? "☀️" : "🌙";
+  const checkbox = document.getElementById("theme-checkbox");
+  if (checkbox) {
+    checkbox.checked = theme === "dark";
   }
 }
 
@@ -18,9 +18,13 @@ function toggleTheme() {
 const savedTheme = localStorage.getItem("theme") || "light";
 setTheme(savedTheme);
 
-// Wire up toggle button
-const themeBtn = document.getElementById("theme-btn");
-if (themeBtn) themeBtn.addEventListener("click", toggleTheme);
+// Wire up toggle — use checkbox change event for reliable state sync
+const checkbox = document.getElementById("theme-checkbox");
+if (checkbox) {
+  checkbox.addEventListener("change", (e) => {
+    setTheme(e.target.checked ? "dark" : "light");
+  });
+}
 
 /* ── State ─────────────────────────────────────────────────────────────── */
 
