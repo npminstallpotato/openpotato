@@ -87,9 +87,8 @@ class ChatRequest(BaseModel):
     message: str
 
 
-async def query_llm(message: str, client: httpx.AsyncClient) -> dict:
+async def query_llm(message: str, client: httpx.AsyncClient, config: dict) -> dict:
     """Send message to LLM provider and return the full Anthropic response."""
-    config = load_config()
     api_key = config.get("LLM_API_KEY", "")
     model = config.get("LLM_MODEL", "deepseek-v4-flash")
     base_url = config.get("LLM_BASE_URL", "https://api.deepseek.com/anthropic")
@@ -158,19 +157,19 @@ async def health():
 
 
 @app.post("/chat")
-async def chat(body: ChatRequest, request: Request, _=Depends(check_config)):
+async def chat(body: ChatRequest, request: Request, config: dict = Depends(check_config)):
     logger.info("chat request: %s", body.message[:80])
-    return await query_llm(body.message, request.app.state.client)
+    return await query_llm(body.message, request.app.state.client, config)
 
 
 @app.get("/chat")
 async def chat_get(
     message: str = Query(..., description="Message to send"),
     request: Request = None,
-    _=Depends(check_config),
+    config: dict = Depends(check_config),
 ):
     logger.info("chat GET request: %s", message[:80])
-    return await query_llm(message, request.app.state.client)
+    return await query_llm(message, request.app.state.client, config)
 
 
 if __name__ == "__main__":

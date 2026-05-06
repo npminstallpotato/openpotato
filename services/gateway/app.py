@@ -119,13 +119,8 @@ async def proxy(path: str, request: Request, base_url: str) -> Response:
 # ── Config endpoint (for UI — live-reloads config.json) ────────────────────
 
 @app.get("/api/config")
-async def get_config(_=Depends(check_gateway_config)):
+async def get_config(config: dict = Depends(check_gateway_config)):
     """Return the current config (API key redacted)."""
-    config = {}
-    if CONFIG_PATH.exists():
-        with open(CONFIG_PATH) as f:
-            config = json.load(f)
-
     return {
         "llm": {
             "model": config.get("LLM_MODEL", "deepseek-v4-flash"),
