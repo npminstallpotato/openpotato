@@ -715,7 +715,6 @@ body {
   align-items: center;
   justify-content: center;
   padding: 9px 18px;
-  min-width: 120px;
   border: none;
   border-radius: var(--radius-sm);
   font-size: 13px;
@@ -724,6 +723,10 @@ body {
   cursor: pointer;
   transition: background 0.15s, transform 0.1s, box-shadow 0.15s;
 }
+
+#settings-cancel-btn  { width: 80px; }
+#settings-restore-btn { width: 160px; }
+#settings-save-btn    { width: 140px; }
 
 .btn:active {
   transform: scale(0.97);
@@ -765,6 +768,7 @@ body {
 }
 
 .settings-status {
+  flex: 1;
   font-size: 13px;
   font-weight: 500;
 }

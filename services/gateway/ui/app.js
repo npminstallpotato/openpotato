@@ -260,7 +260,8 @@ async function saveSettings(e) {
   if (!confirm("Save these settings?")) return;
 
   saveBtn.disabled = true;
-  saveBtn.textContent = "Saving…";
+  restoreBtn.disabled = true;
+  cancelBtn.disabled = true;
   settingsStatus.textContent = "";
   settingsStatus.className = "settings-status";
 
@@ -276,6 +277,7 @@ async function saveSettings(e) {
       const err = await resp.json().catch(() => ({}));
       settingsStatus.textContent = err.detail || `Error saving (${resp.status})`;
       settingsStatus.className = "settings-status error";
+      saveBtn.disabled = false;
       return;
     }
     settingsStatus.textContent = "Settings saved successfully";
@@ -285,9 +287,10 @@ async function saveSettings(e) {
   } catch {
     settingsStatus.textContent = "Network error — is the server running?";
     settingsStatus.className = "settings-status error";
-  } finally {
     saveBtn.disabled = false;
-    saveBtn.textContent = "Save Settings";
+  } finally {
+    restoreBtn.disabled = false;
+    cancelBtn.disabled = false;
   }
 }
 
@@ -295,9 +298,10 @@ async function restoreDefaults() {
   restoreBtn.blur();
   if (!confirm("Restore default settings? This will overwrite your current values.")) return;
 
+  saveBtn.disabled = true;
   restoreBtn.disabled = true;
-  restoreBtn.textContent = "Restoring…";
-  settingsStatus.textContent = "Restoring…";
+  cancelBtn.disabled = true;
+  settingsStatus.textContent = "";
   settingsStatus.className = "settings-status";
 
   try {
@@ -306,6 +310,7 @@ async function restoreDefaults() {
     if (!defResp.ok) {
       settingsStatus.textContent = "Error fetching defaults";
       settingsStatus.className = "settings-status error";
+      saveBtn.disabled = false;
       return;
     }
     const defaults = await defResp.json();
@@ -320,6 +325,7 @@ async function restoreDefaults() {
       const err = await resp.json().catch(() => ({}));
       settingsStatus.textContent = err.detail || `Error restoring (${resp.status})`;
       settingsStatus.className = "settings-status error";
+      saveBtn.disabled = false;
       return;
     }
 
@@ -335,9 +341,10 @@ async function restoreDefaults() {
   } catch {
     settingsStatus.textContent = "Network error — is the server running?";
     settingsStatus.className = "settings-status error";
+    saveBtn.disabled = false;
   } finally {
     restoreBtn.disabled = false;
-    restoreBtn.textContent = "Restore Defaults";
+    cancelBtn.disabled = false;
   }
 }
 
@@ -346,7 +353,11 @@ async function cancelEdits() {
   settingsStatus.textContent = "";
   settingsStatus.className = "settings-status";
   if (!settingsChanged() || confirm("Discard unsaved changes?")) {
+    restoreBtn.disabled = true;
+    cancelBtn.disabled = true;
     await loadSettings();
+    restoreBtn.disabled = false;
+    cancelBtn.disabled = false;
   }
 }
 
