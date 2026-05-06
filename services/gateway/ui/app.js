@@ -1,37 +1,31 @@
 /* ── State ─────────────────────────────────────────────────────────────── */
 
-let conversation = [];
-
 const chatEl = document.getElementById("chat");
 const formEl = document.getElementById("chat-form");
 const inputEl = document.getElementById("message-input");
 const sendBtn = document.getElementById("send-btn");
 const configContent = document.getElementById("config-content");
 
-/* ── Sidebar navigation ────────────────────────────────────────────────── */
+let messageCount = 0;
+
+/* ── Sidebar navigation ───────────────────────────────────────────────── */
 
 document.querySelectorAll(".nav-item").forEach((item) => {
   item.addEventListener("click", () => {
-    // Update active nav item
     document
       .querySelectorAll(".nav-item")
       .forEach((n) => n.classList.remove("active"));
     item.classList.add("active");
 
-    // Switch active view
     document
       .querySelectorAll(".view")
       .forEach((v) => v.classList.remove("active"));
     const view = document.getElementById(`view-${item.dataset.view}`);
     if (view) view.classList.add("active");
 
-    // Load settings content when switching to settings
     if (item.dataset.view === "settings") {
       loadConfig();
-    }
-
-    // Focus input when switching to chat
-    if (item.dataset.view === "chat") {
+    } else if (item.dataset.view === "chat") {
       inputEl.focus();
     }
   });
@@ -39,8 +33,8 @@ document.querySelectorAll(".nav-item").forEach((item) => {
 
 /* ── Helpers ──────────────────────────────────────────────────────────── */
 
-function scrollBottom() {
-  chatEl.scrollTop = chatEl.scrollHeight;
+function scrollToBottom() {
+  chatEl.scrollTo({ top: chatEl.scrollHeight, behavior: "smooth" });
 }
 
 function escapeHtml(text) {
@@ -54,9 +48,11 @@ function escapeHtml(text) {
 function addMessage(role, text) {
   const div = document.createElement("div");
   div.className = `message ${role}`;
+  div.style.animationDelay = "0s";
   div.innerHTML = `<div class="bubble">${escapeHtml(text)}</div>`;
   chatEl.appendChild(div);
-  scrollBottom();
+  messageCount++;
+  scrollToBottom();
 }
 
 function showTyping() {
@@ -65,7 +61,7 @@ function showTyping() {
   div.id = "typing-indicator";
   div.innerHTML = `<div class="bubble"><span></span><span></span><span></span></div>`;
   chatEl.appendChild(div);
-  scrollBottom();
+  scrollToBottom();
 }
 
 function removeTyping() {
@@ -78,7 +74,7 @@ function showError(msg) {
   div.className = "message error";
   div.innerHTML = `<div class="bubble">${escapeHtml(msg)}</div>`;
   chatEl.appendChild(div);
-  scrollBottom();
+  scrollToBottom();
 }
 
 /* ── Chat ──────────────────────────────────────────────────────────────── */
@@ -115,7 +111,7 @@ async function sendMessage(text) {
   }
 }
 
-/* ── Events ────────────────────────────────────────────────────────────── */
+/* ── Events ───────────────────────────────────────────────────────────── */
 
 formEl.addEventListener("submit", (e) => {
   e.preventDefault();
@@ -125,7 +121,21 @@ formEl.addEventListener("submit", (e) => {
   sendMessage(text);
 });
 
-/* ── Settings / Config ─────────────────────────────────────────────────── */
+/* ── Keyboard shortcut ────────────────────────────────────────────────── */
+
+document.addEventListener("keydown", (e) => {
+  // Cmd/Ctrl + . switches to Settings, Cmd/Ctrl + , switches to Chat
+  if ((e.metaKey || e.ctrlKey) && e.key === ".") {
+    e.preventDefault();
+    document.querySelector('.nav-item[data-view="settings"]').click();
+  }
+  if ((e.metaKey || e.ctrlKey) && e.key === ",") {
+    e.preventDefault();
+    document.querySelector('.nav-item[data-view="chat"]').click();
+  }
+});
+
+/* ── Settings / Config ────────────────────────────────────────────────── */
 
 async function loadConfig() {
   configContent.textContent = "Loading…";

@@ -4,17 +4,21 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>OpenPotato</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="/style.css">
 </head>
 <body>
   <div id="app">
-    <!-- Sidebar -->
+
+    <!-- ── Sidebar ────────────────────────────────────────────── -->
     <aside id="sidebar">
       <div class="brand">
-        <span class="logo">🥔</span>
+        <span class="brand-emoji">🥔</span>
         <div class="brand-text">
-          <h1>OpenPotato</h1>
-          <span class="version">v0.1.0</span>
+          <h1 class="brand-name">OpenPotato</h1>
+          <span class="brand-version">v0.1.0</span>
         </div>
       </div>
 
@@ -30,20 +34,21 @@
       </nav>
 
       <div class="sidebar-footer">
-        <div class="status">
+        <div class="connection-status">
           <span class="status-dot"></span>
-          <span class="status-text">Connected</span>
+          <span class="status-label">Connected</span>
         </div>
-        <span class="status-port">localhost:8000</span>
+        <span class="status-endpoint">localhost:8000</span>
       </div>
     </aside>
 
-    <!-- Main Content -->
+    <!-- ── Main ───────────────────────────────────────────────── -->
     <main id="main">
-      <!-- Chat View -->
-      <div id="view-chat" class="view active">
+
+      <!-- ── Chat View ──────────────────────────────────────── -->
+      <section id="view-chat" class="view active">
         <header class="view-header">
-          <h2>💬 Chat</h2>
+          <h2 class="view-title">Chat</h2>
         </header>
 
         <div id="chat" role="log" aria-label="Chat messages">
@@ -52,28 +57,50 @@
           </div>
         </div>
 
-        <footer class="input-area">
+        <div class="input-area">
           <form id="chat-form">
-            <input type="text" id="message-input" placeholder="Type a message…" autofocus required>
-            <button type="submit" id="send-btn">Send</button>
+            <div class="input-wrapper">
+              <input
+                type="text"
+                id="message-input"
+                placeholder="Ask anything…"
+                autofocus
+                required
+              >
+              <button type="submit" id="send-btn" aria-label="Send message">
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="22" y1="2" x2="11" y2="13"></line>
+                  <polygon points="22 2 15 22 11 13 2 9 22 2"></polygon>
+                </svg>
+              </button>
+            </div>
           </form>
-        </footer>
-      </div>
+        </div>
+      </section>
 
-      <!-- Settings View -->
-      <div id="view-settings" class="view">
+      <!-- ── Settings View ───────────────────────────────────── -->
+      <section id="view-settings" class="view">
         <header class="view-header">
-          <h2>⚙️ Settings</h2>
+          <h2 class="view-title">Settings</h2>
         </header>
 
         <div class="settings-content">
-          <p class="settings-hint">
-            Configuration loaded from <code>config.json</code>.
-            Changes apply on the next request — no restart needed.
-          </p>
-          <pre id="config-content">Loading…</pre>
+          <div class="settings-card">
+            <p class="settings-hint">
+              Configuration is loaded from <code>config.json</code> on every request.
+              Edit the file directly — changes apply immediately, no restart needed.
+            </p>
+          </div>
+          <div class="settings-card config-card">
+            <div class="config-card-header">
+              <span class="config-card-icon">⚙️</span>
+              <span>Current Configuration</span>
+            </div>
+            <pre id="config-content">Loading…</pre>
+          </div>
         </div>
-      </div>
+      </section>
+
     </main>
   </div>
 
