@@ -17,10 +17,10 @@ open http://localhost:8000
 
 ## Configuration
 
-After running `./install.sh`, edit `.env` with your settings:
+After running `./install.sh`, edit `config.json` with your settings:
 
-| Variable | Description |
-|----------|-------------|
+| Key | Description |
+|-----|-------------|
 | `LLM_API_KEY` | Your DeepSeek (or compatible) API key |
 | `LLM_MODEL` | Model name (default: `deepseek-v4-flash`) |
 | `LLM_BASE_URL` | API base URL (default: `https://api.deepseek.com/anthropic`) |
@@ -76,8 +76,8 @@ All requests go through the **Gateway** (`http://localhost:8000`). The LLM servi
 │   └── llm/
 │       ├── app.py       # LLM microservice — DeepSeek integration
 │       └── tests.py
-├── .env.example          # Environment variable template
-├── .env                  # Local env vars (git-ignored)
+├── config.json          # Local config with API keys (gitignored)
+├── config.example.json  # Configuration template
 ├── install.sh            # One-shot setup script
 ├── start.sh              # Start all services
 ├── stop.sh               # Stop all services

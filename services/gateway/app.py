@@ -8,7 +8,6 @@ from pathlib import Path
 from urllib.parse import urlencode
 
 import httpx
-from dotenv import load_dotenv
 from fastapi import FastAPI, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -16,9 +15,17 @@ from fastapi.staticfiles import StaticFiles
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ── Config from environment ────────────────────────────────────────────────
+# ── Config from config.json, falling back to env vars ──────────────────────
 
-load_dotenv()
+_config_path = Path(__file__).resolve().parent.parent / "config.json"
+if _config_path.exists():
+    with open(_config_path) as _f:
+        for _k, _v in json.load(_f).items():
+            if _k not in os.environ:  # don't override existing env vars
+                os.environ[_k] = str(_v)
+    logger.info("Loaded config from %s", _config_path)
+else:
+    logger.warning("config.json not found at %s — using env vars / defaults", _config_path)
 
 GATEWAY_PORT = int(os.getenv("GATEWAY_PORT", "8000"))
 GATEWAY_HOST = os.getenv("GATEWAY_HOST", "127.0.0.1")

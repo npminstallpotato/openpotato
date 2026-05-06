@@ -1,24 +1,33 @@
-"""FastAPI LLM microservice — config loaded from .env.
+"""FastAPI LLM microservice — config loaded from config.json.
 
 Uses Anthropic-compatible API format (x-api-key auth, /messages endpoint).
 Returns the full Anthropic response body.
 """
 
+import json
 import os
 import logging
 from contextlib import asynccontextmanager
+from pathlib import Path
 
 import httpx
-from dotenv import load_dotenv
 from fastapi import FastAPI, Query, Request
 from pydantic import BaseModel
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ── Config from environment ────────────────────────────────────────────────
+# ── Config from config.json, falling back to env vars ──────────────────────
 
-load_dotenv()
+_config_path = Path(__file__).resolve().parent.parent / "config.json"
+if _config_path.exists():
+    with open(_config_path) as _f:
+        for _k, _v in json.load(_f).items():
+            if _k not in os.environ:  # don't override existing env vars
+                os.environ[_k] = str(_v)
+    logger.info("Loaded config from %s", _config_path)
+else:
+    logger.warning("config.json not found at %s — using env vars / defaults", _config_path)
 
 API_KEY = os.getenv("LLM_API_KEY", "")
 MODEL = os.getenv("LLM_MODEL", "deepseek-v4-flash")

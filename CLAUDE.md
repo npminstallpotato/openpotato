@@ -17,8 +17,8 @@ OpenPotato/
 │       └── tests.py
 ├── .claude/             # Claude project settings
 ├── .config/             # Local Claude CLI config (gitignored)
-├── .env.example         # Environment variable template
-├── .env                 # Local env vars with API keys (gitignored)
+├── config.json          # Local config with API keys (gitignored)
+├── config.example.json  # Environment variable template
 ├── CLAUDE.md            # Project memory for Claude
 ├── CONTRIBUTING.md      # Commit convention guide
 ├── LICENSE              # MIT license
@@ -37,20 +37,20 @@ OpenPotato/
 
 ## Architecture
 
-Two FastAPI microservices — each self-bootstrapping from `.env` + environment variables:
+Two FastAPI microservices — each loading config from `config.json` at startup:
 
 | Service     | Port | Role                                    |
 |-------------|------|-----------------------------------------|
 | **LLM**     | 8002 | Proxies chat requests to DeepSeek API   |
 | **Gateway** | 8000 | Serves the UI + proxies `/api/llm/*`    |
 
-No inter-service config dependency. Each service loads `.env` via `python-dotenv` at startup,
-reads its own config from `os.environ`, and falls back to safe defaults.
+No inter-service config dependency. Each service reads `config.json` from the project root,
+injects values into `os.environ`, and falls back to safe defaults.
 
 ## Key Conventions
 
 - **Commit messages:** Conventional Commits (`feat:`, `fix:`, `docs:`, etc.) — lowercase, no period
 - **Python:** always use `-B` flag when running Python (prevents `__pycache__`), bytecode disabled via `-B` flag in start.sh (not per-file)
-- **Config:** `.env` file loaded via `python-dotenv`, secrets never served over HTTP
+- **Config:** `config.json` file loaded at startup, secrets never served over HTTP
 - **HTTP client:** shared `httpx.AsyncClient` attached to `app.state` in lifespan
 - **Tests:** always run separately (`pytest services/llm/tests.py` then `pytest services/gateway/tests.py`) — same filenames cause import collisions
