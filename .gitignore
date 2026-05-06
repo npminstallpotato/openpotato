@@ -22,3 +22,6 @@ pytest.ini
 
 # Local config (legacy — kept for safety)
 config.json
+
+# Temp files
+tmp.md
