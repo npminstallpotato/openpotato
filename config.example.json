@@ -1,7 +1,4 @@
 {
-  "LLM_API_KEY": "",
-  "LLM_MODEL": "deepseek-v4-flash",
-  "LLM_BASE_URL": "https://api.deepseek.com/anthropic",
   "INTERNAL_SECRET": "igotyuandme",
   "LLM_PORT": "8002",
   "LLM_HOST": "127.0.0.1",

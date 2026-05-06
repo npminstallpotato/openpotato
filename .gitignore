@@ -17,8 +17,9 @@ pytest.ini
 # macOS
 .DS_Store
 
-# Local config (contains real API keys)
+# Local config and settings (contains real API keys)
 config.json
+settings.json
 
 # Temp files
 tmp.md

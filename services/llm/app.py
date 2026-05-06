@@ -1,4 +1,4 @@
-"""FastAPI LLM microservice — config loaded from config.json.
+"""FastAPI LLM microservice — infra config from config.json, LLM settings from settings.json.
 
 Uses Anthropic-compatible API format (x-api-key auth, /messages endpoint).
 Returns the full Anthropic response body.
@@ -16,24 +16,34 @@ from pydantic import BaseModel
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ── Config from config.json (live-reloaded on every request) ───────────────
+# ── Config from config.json (read once at startup) ─────────────────────────
 
 CONFIG_PATH = Path("config.json")
 
-def load_config():
-    """Read config.json and return as dict. Returns {} on error."""
+_config = {}
+if CONFIG_PATH.exists():
+    with open(CONFIG_PATH) as f:
+        _config = json.load(f)
+    logger.info("Config loaded from %s", CONFIG_PATH)
+else:
+    logger.warning("config.json not found at %s — using defaults", CONFIG_PATH)
+
+PORT = int(_config.get("LLM_PORT", "8002"))
+INTERNAL_SECRET = _config.get("INTERNAL_SECRET", "")
+
+# ── Settings from settings.json (live-reloaded on every request) ───────────
+
+SETTINGS_PATH = Path("settings.json")
+
+
+def load_settings() -> dict:
+    """Read settings.json and return as dict. Returns {} on error."""
     try:
-        with open(CONFIG_PATH) as f:
+        with open(SETTINGS_PATH) as f:
             return json.load(f)
     except (FileNotFoundError, json.JSONDecodeError):
         return {}
 
-PORT = int(load_config().get("LLM_PORT", "8002"))
-
-if CONFIG_PATH.exists():
-    logger.info("Config loaded from %s", CONFIG_PATH)
-else:
-    logger.warning("config.json not found at %s — using defaults", CONFIG_PATH)
 
 # ── Required config keys (validated on every API call) ─────────────────────
 
@@ -45,22 +55,22 @@ REQUIRED_KEYS = {
 
 
 def check_config():
-    """FastAPI dependency: verify all required config values are present and non-empty.
+    """FastAPI dependency: verify all required settings values are present.
 
-    Returns the config dict on success, raises HTTPException(503) on failure.
+    Returns the settings dict on success, raises HTTPException(503) on failure.
     Applied to every chat endpoint — ensures no request reaches the LLM provider
     with missing configuration.
     """
-    config = load_config()
-    missing = [key for key in REQUIRED_KEYS if not config.get(key)]
+    settings = load_settings()
+    missing = [key for key in REQUIRED_KEYS if not settings.get(key)]
     if missing:
         detail = {
             "error": "Service unavailable — missing required configuration",
             "missing_keys": missing,
-            "hint": f"Set {', '.join(missing)} in config.json and restart or refresh",
+            "hint": f"Set {', '.join(missing)} in settings.json and restart or refresh",
         }
         raise HTTPException(status_code=503, detail=detail)
-    return config
+    return settings
 
 # ── Lifespan — shared HTTP client ──────────────────────────────────────────
 
@@ -87,11 +97,11 @@ class ChatRequest(BaseModel):
     message: str
 
 
-async def query_llm(message: str, client: httpx.AsyncClient, config: dict) -> dict:
+async def query_llm(message: str, client: httpx.AsyncClient, settings: dict) -> dict:
     """Send message to LLM provider and return the full Anthropic response."""
-    api_key = config.get("LLM_API_KEY", "")
-    model = config.get("LLM_MODEL", "deepseek-v4-flash")
-    base_url = config.get("LLM_BASE_URL", "https://api.deepseek.com/anthropic")
+    api_key = settings.get("LLM_API_KEY", "")
+    model = settings.get("LLM_MODEL", "deepseek-v4-flash")
+    base_url = settings.get("LLM_BASE_URL", "https://api.deepseek.com/anthropic")
 
     resp = await client.post(
         f"{base_url}/messages",
@@ -115,9 +125,7 @@ async def query_llm(message: str, client: httpx.AsyncClient, config: dict) -> di
 
 def check_internal_origin(request: Request):
     """Only allow requests that come through the Gateway."""
-    config = load_config()
-    secret = config.get("INTERNAL_SECRET", "")
-    if request.headers.get("x-internal-secret", "") != secret:
+    if request.headers.get("x-internal-secret", "") != INTERNAL_SECRET:
         raise HTTPException(
             status_code=403,
             detail="Direct access not allowed — use the Gateway on port 8000",
@@ -127,9 +135,9 @@ def check_internal_origin(request: Request):
 @app.get("/health")
 async def health(_=Depends(check_internal_origin)):
     """Return service health and config validation status."""
-    config = load_config()
-    model = config.get("LLM_MODEL", "deepseek-v4-flash")
-    missing = [key for key in REQUIRED_KEYS if not config.get(key)]
+    settings = load_settings()
+    model = settings.get("LLM_MODEL", "deepseek-v4-flash")
+    missing = [key for key in REQUIRED_KEYS if not settings.get(key)]
     return {
         "status": "unhealthy" if missing else "ok",
         "model": model,
@@ -139,20 +147,20 @@ async def health(_=Depends(check_internal_origin)):
 
 
 @app.post("/chat")
-async def chat(body: ChatRequest, request: Request, config: dict = Depends(check_config), _=Depends(check_internal_origin)):
+async def chat(body: ChatRequest, request: Request, settings: dict = Depends(check_config), _=Depends(check_internal_origin)):
     logger.info("chat request: %s", body.message[:80])
-    return await query_llm(body.message, request.app.state.client, config)
+    return await query_llm(body.message, request.app.state.client, settings)
 
 
 @app.get("/chat")
 async def chat_get(
     message: str = Query(..., description="Message to send"),
     request: Request = None,
-    config: dict = Depends(check_config),
+    settings: dict = Depends(check_config),
     _=Depends(check_internal_origin),
 ):
     logger.info("chat GET request: %s", message[:80])
-    return await query_llm(message, request.app.state.client, config)
+    return await query_llm(message, request.app.state.client, settings)
 
 
 if __name__ == "__main__":

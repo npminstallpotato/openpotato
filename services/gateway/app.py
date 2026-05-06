@@ -13,10 +13,12 @@ from starlette.responses import FileResponse
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ── Config from config.json (initial load for proxy settings) ─────────────────
+# ── Config / Settings paths ─────────────────────────────────────────────────
 
 CONFIG_PATH = Path("config.json")
+SETTINGS_PATH = Path("settings.json")
 
+# config.json — read once at startup (infrastructure / secrets)
 _config = {}
 if CONFIG_PATH.exists():
     with open(CONFIG_PATH) as f:
@@ -31,6 +33,15 @@ LLM_HOST = _config.get("LLM_HOST", "127.0.0.1")
 LLM_PORT = int(_config.get("LLM_PORT", "8002"))
 LLM_BASE = f"http://{LLM_HOST}:{LLM_PORT}"
 INTERNAL_SECRET = _config.get("INTERNAL_SECRET", "")
+
+
+def load_settings() -> dict:
+    """Read settings.json (live-reloaded on every call)."""
+    try:
+        with open(SETTINGS_PATH) as f:
+            return json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        return {}
 
 UI_DIR = Path("services/gateway/ui")
 
@@ -118,19 +129,20 @@ async def proxy(path: str, request: Request, base_url: str) -> Response:
         )
 
 
-# ── Config endpoint (for UI — live-reloads config.json) ────────────────────
+# ── Config endpoint (for UI — live-reloads settings.json) ──────────────────
 
 @app.get("/api/config")
-async def get_config(config: dict = Depends(check_gateway_config)):
-    """Return the current config (API key redacted)."""
+async def get_config():
+    """Return the current settings (API key redacted) + infrastructure ports."""
+    settings = load_settings()
     return {
         "llm": {
-            "model": config.get("LLM_MODEL", "deepseek-v4-flash"),
-            "base_url": config.get("LLM_BASE_URL", "https://api.deepseek.com/anthropic"),
+            "model": settings.get("LLM_MODEL", "deepseek-v4-flash"),
+            "base_url": settings.get("LLM_BASE_URL", "https://api.deepseek.com/anthropic"),
             "api_key": "***",
         },
-        "llm_port": int(config.get("LLM_PORT", "8002")),
-        "gateway_port": int(config.get("GATEWAY_PORT", "8000")),
+        "llm_port": LLM_PORT,
+        "gateway_port": GATEWAY_PORT,
     }
 
 
