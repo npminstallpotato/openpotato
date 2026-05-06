@@ -17,18 +17,25 @@ open http://localhost:8000
 
 ## Configuration
 
-After running `./install.sh`, edit `config.json` with your settings:
+After running `./install.sh`, two files control the system:
+
+### `config.json` — Infrastructure / secrets (read once at startup)
+
+| Key | Description |
+|-----|-------------|
+| `INTERNAL_SECRET` | Shared secret between Gateway and LLM services |
+| `LLM_PORT` | Port the LLM service runs on |
+| `LLM_HOST` | Host the LLM service binds to (default: `127.0.0.1`) |
+| `GATEWAY_PORT` | Port the Gateway serves the UI on |
+| `GATEWAY_HOST` | Host the Gateway binds to (default: `127.0.0.1`) |
+
+### `settings.json` — LLM provider (live-reloaded, no restart needed)
 
 | Key | Description |
 |-----|-------------|
 | `LLM_API_KEY` | Your DeepSeek (or compatible) API key |
 | `LLM_MODEL` | Model name (default: `deepseek-v4-flash`) |
 | `LLM_BASE_URL` | API base URL (default: `https://api.deepseek.com/anthropic`) |
-| `LLM_PORT` | Port the LLM service runs on |
-| `GATEWAY_PORT` | Port the Gateway serves the UI on |
-| `INTERNAL_SECRET` | Shared secret between Gateway and LLM services |
-| `LLM_HOST` | Host the LLM service binds to (default: `127.0.0.1`) |
-| `GATEWAY_HOST` | Host the Gateway binds to (default: `127.0.0.1`) |
 
 ## API Endpoints
 
@@ -84,11 +91,14 @@ All requests go through the **Gateway** (`http://localhost:8000`). The LLM servi
 │   └── llm/
 │       ├── app.py       # LLM microservice — DeepSeek integration
 │       └── tests.py
-├── config.json          # Local config with API keys (gitignored)
-├── config.example.json  # Configuration template
-├── install.sh            # One-shot setup script
-├── start.sh              # Start all services
-├── stop.sh               # Stop all services
+├── config.json              # Infrastructure config / secrets (gitignored)
+├── config.example.json      # Config template
+├── settings.json            # LLM provider settings (gitignored)
+├── settings.example.json    # Settings template
+├── install.sh               # One-shot setup script
+├── start.sh                 # Start all services
+├── stop.sh                  # Stop all services
+├── restart.sh               # Restart all services
 └── requirements.txt      # Python dependencies
 ```
 
