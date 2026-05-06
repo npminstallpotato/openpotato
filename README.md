@@ -26,6 +26,7 @@ After running `./install.sh`, edit `config.json` with your settings:
 | `LLM_BASE_URL` | API base URL (default: `https://api.deepseek.com/anthropic`) |
 | `LLM_PORT` | Port the LLM service runs on |
 | `GATEWAY_PORT` | Port the Gateway serves the UI on |
+| `INTERNAL_SECRET` | Shared secret between Gateway and LLM services |
 | `LLM_HOST` | Host the LLM service binds to (default: `127.0.0.1`) |
 | `GATEWAY_HOST` | Host the Gateway binds to (default: `127.0.0.1`) |
 

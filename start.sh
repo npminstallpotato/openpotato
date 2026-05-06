@@ -33,8 +33,8 @@ echo "  PID $(cat /tmp/openpotato-gateway.pid) — http://localhost:8000"
 sleep 2
 echo
 echo "Checking services…"
-if curl -sf http://127.0.0.1:8002/health >/dev/null 2>&1; then
-    echo "  ✓ LLM service is healthy"
+if curl -sf http://127.0.0.1:8000/api/llm/health >/dev/null 2>&1; then
+    echo "  ✓ LLM service is healthy (via Gateway)"
 else
     echo "  ✗ LLM service not ready yet — check logs for errors"
 fi

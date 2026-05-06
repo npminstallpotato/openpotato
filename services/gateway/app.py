@@ -30,6 +30,7 @@ GATEWAY_HOST = _config.get("GATEWAY_HOST", "127.0.0.1")
 LLM_HOST = _config.get("LLM_HOST", "127.0.0.1")
 LLM_PORT = int(_config.get("LLM_PORT", "8002"))
 LLM_BASE = f"http://{LLM_HOST}:{LLM_PORT}"
+INTERNAL_SECRET = _config.get("INTERNAL_SECRET", "")
 
 UI_DIR = Path("services/gateway/ui")
 
@@ -92,6 +93,7 @@ async def proxy(path: str, request: Request, base_url: str) -> Response:
         k: v for k, v in request.headers.items()
         if k.lower() not in ("host", "content-length")
     }
+    headers["x-internal-secret"] = INTERNAL_SECRET
 
     body = await request.body()
 

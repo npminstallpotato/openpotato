@@ -1,9 +1,28 @@
 """Tests for the LLM microservice."""
 
+import json
+from pathlib import Path
 from unittest.mock import patch
 
 from fastapi.testclient import TestClient
 from app import app
+
+# Read the internal secret from config.json so tests can simulate Gateway requests
+_config_path = Path("config.json")
+if _config_path.exists():
+    with open(_config_path) as f:
+        _cfg = json.load(f)
+else:
+    _cfg = {}
+INTERNAL_SECRET = _cfg.get("INTERNAL_SECRET", "")
+
+
+def _gw(headers=None):
+    """Helper: add the internal secret header that the Gateway would send."""
+    h = headers or {}
+    h.setdefault("x-internal-secret", INTERNAL_SECRET)
+    return h
+
 
 MOCK_RESPONSE = {
     "id": "test-msg",
@@ -21,7 +40,7 @@ async def _mock_query_llm(*args, **kwargs):
 
 def test_health():
     with TestClient(app) as client:
-        response = client.get("/health")
+        response = client.get("/health", headers=_gw())
         assert response.status_code == 200
         data = response.json()
         assert data["status"] == "ok"
@@ -44,7 +63,7 @@ def _assert_anthropic_response(data):
 @patch("app.query_llm", _mock_query_llm)
 def test_chat_get():
     with TestClient(app) as client:
-        response = client.get("/chat", params={"message": "Hello"})
+        response = client.get("/chat", params={"message": "Hello"}, headers=_gw())
         assert response.status_code == 200
         _assert_anthropic_response(response.json())
 
@@ -52,20 +71,20 @@ def test_chat_get():
 @patch("app.query_llm", _mock_query_llm)
 def test_chat_post():
     with TestClient(app) as client:
-        response = client.post("/chat", json={"message": "Hi there"})
+        response = client.post("/chat", json={"message": "Hi there"}, headers=_gw())
         assert response.status_code == 200
         _assert_anthropic_response(response.json())
 
 
 def test_chat_get_missing_message():
     with TestClient(app) as client:
-        response = client.get("/chat")
+        response = client.get("/chat", headers=_gw())
         assert response.status_code == 422
 
 
 @patch("app.query_llm", _mock_query_llm)
 def test_chat_post_empty_message():
     with TestClient(app) as client:
-        response = client.post("/chat", json={"message": ""})
+        response = client.post("/chat", json={"message": ""}, headers=_gw())
         assert response.status_code == 200
         _assert_anthropic_response(response.json())

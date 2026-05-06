@@ -113,8 +113,19 @@ async def query_llm(message: str, client: httpx.AsyncClient, config: dict) -> di
     return resp.json()
 
 
+def check_internal_origin(request: Request):
+    """Only allow requests that come through the Gateway."""
+    config = load_config()
+    secret = config.get("INTERNAL_SECRET", "")
+    if request.headers.get("x-internal-secret", "") != secret:
+        raise HTTPException(
+            status_code=403,
+            detail="Direct access not allowed — use the Gateway on port 8000",
+        )
+
+
 @app.get("/health")
-async def health():
+async def health(_=Depends(check_internal_origin)):
     """Return service health and config validation status."""
     config = load_config()
     model = config.get("LLM_MODEL", "deepseek-v4-flash")
@@ -128,7 +139,7 @@ async def health():
 
 
 @app.post("/chat")
-async def chat(body: ChatRequest, request: Request, config: dict = Depends(check_config)):
+async def chat(body: ChatRequest, request: Request, config: dict = Depends(check_config), _=Depends(check_internal_origin)):
     logger.info("chat request: %s", body.message[:80])
     return await query_llm(body.message, request.app.state.client, config)
 
@@ -138,6 +149,7 @@ async def chat_get(
     message: str = Query(..., description="Message to send"),
     request: Request = None,
     config: dict = Depends(check_config),
+    _=Depends(check_internal_origin),
 ):
     logger.info("chat GET request: %s", message[:80])
     return await query_llm(message, request.app.state.client, config)
