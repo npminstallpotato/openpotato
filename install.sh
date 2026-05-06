@@ -27,7 +27,7 @@ echo
 PYTHON=""
 for candidate in python3 python; do
     if command -v "$candidate" &>/dev/null; then
-        version="$("$candidate" --version 2>&1 | grep -oP '\d+\.\d+')"
+        version="$("$candidate" --version 2>&1 | awk '{print $2}' | cut -d. -f1-2)"
         major="${version%.*}"
         minor="${version#*.}"
         if [ "$major" -ge 3 ] && [ "$minor" -ge 10 ]; then
@@ -66,17 +66,17 @@ echo "Installing dependencies…"
 echo -e "${GREEN}✓ Dependencies installed${NC}"
 echo
 
-# ── Create config.json from example (if missing) ─────────────────────────────
+# ── Create .env from example (if missing) ───────────────────────────────────
 
-if [ -f "config.json" ]; then
-    echo -e "${YELLOW}config.json already exists — keeping it as-is.${NC}"
+if [ -f ".env" ]; then
+    echo -e "${YELLOW}.env already exists — keeping it as-is.${NC}"
 else
-    if [ -f "config-example.json" ]; then
-        cp config-example.json config.json
-        echo -e "${GREEN}✓ Created config.json from config-example.json${NC}"
-        echo -e "${YELLOW}  ▶ Edit config.json to add your LLM API key before starting.${NC}"
+    if [ -f ".env.example" ]; then
+        cp .env.example .env
+        echo -e "${GREEN}✓ Created .env from .env.example${NC}"
+        echo -e "${YELLOW}  ▶ Edit .env to add your LLM API key before starting.${NC}"
     else
-        echo -e "${YELLOW}Warning: config-example.json not found — skipping config setup.${NC}"
+        echo -e "${YELLOW}Warning: .env.example not found — skipping .env setup.${NC}"
     fi
 fi
 
@@ -86,9 +86,7 @@ echo
 
 echo -e "${BOLD}Installation complete!${NC}"
 echo
-echo -e "  ${GREEN}▶${NC} Edit config.json:       ${BOLD}${EDITOR:-nano} config.json${NC}"
+echo -e "  ${GREEN}▶${NC} Edit .env:              ${BOLD}${EDITOR:-nano} .env${NC}"
 echo -e "  ${GREEN}▶${NC} Start all services:     ${BOLD}./start.sh${NC}"
 echo -e "  ${GREEN}▶${NC} Open in browser:        ${BOLD}http://localhost:8000${NC}"
 echo -e "  ${GREEN}▶${NC} Stop all services:      ${BOLD}./stop.sh${NC}"
-echo
-echo -e "  ${YELLOW}Tip:${NC} Ensure all ports (8000, 8001, 8002) are free before starting."

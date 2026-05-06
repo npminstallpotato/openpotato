@@ -17,5 +17,8 @@ pytest.ini
 # macOS
 .DS_Store
 
-# Local config (contains real API keys)
+# Environment variables (contains real API keys)
+.env
+
+# Local config (legacy — kept for safety)
 config.json

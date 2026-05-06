@@ -17,52 +17,71 @@ open http://localhost:8000
 
 ## Configuration
 
-Edit `config.json` with your settings:
+After running `./install.sh`, edit `.env` with your settings:
+
+| Variable | Description |
+|----------|-------------|
+| `LLM_API_KEY` | Your DeepSeek (or compatible) API key |
+| `LLM_MODEL` | Model name (default: `deepseek-v4-flash`) |
+| `LLM_BASE_URL` | API base URL (default: `https://api.deepseek.com/anthropic`) |
+| `LLM_PORT` | Port the LLM service runs on |
+| `GATEWAY_PORT` | Port the Gateway serves the UI on |
+| `LLM_HOST` | Host the LLM service binds to (default: `127.0.0.1`) |
+| `GATEWAY_HOST` | Host the Gateway binds to (default: `127.0.0.1`) |
+| `GATEWAY_API_KEY` | Optional API key for gateway authentication |
+
+## API Endpoints
+
+All requests go through the **Gateway** (`http://localhost:8000`). The LLM service is not exposed directly.
+
+### Gateway
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/` | Serves the chat UI |
+| `GET` | `/api/config` | Returns current config (API key redacted) |
+| `*` | `/api/llm/*` | Proxies requests to the LLM service |
+
+### LLM (via Gateway proxy)
+
+| Method | Path | Description |
+|--------|------|-------------|
+| `GET` | `/api/llm/health` | Health check |
+| `POST` | `/api/llm/chat` | Send a chat message |
+| `GET` | `/api/llm/chat?message=...` | Send a chat message via query param |
+
+**Chat request:**
 
 ```json
-{
-  "llm": {
-    "api_key": "sk-...",
-    "model": "deepseek-v4-flash",
-    "base_url": "https://api.deepseek.com/v1"
-  },
-  "llm_port": 8002,
-  "utils_port": 8001,
-  "gateway_port": 8000
-}
+{ "message": "Hello, world!" }
 ```
 
-| Key | Description |
-|-----|-------------|
-| `llm.api_key` | Your DeepSeek (or compatible) API key |
-| `llm.model` | Model name (default: `deepseek-v4-flash`) |
-| `llm.base_url` | API base URL (default: `https://api.deepseek.com/v1`) |
-| `llm_port` | Port the LLM service runs on |
-| `utils_port` | Port the Utils config service runs on |
-| `gateway_port` | Port the Gateway serves the UI on |
+**Chat response:**
+
+```json
+{ "reply": "Hello! How can I help you today?" }
+```
 
 ## Project Structure
 
 ```
 ├── apps/
 │   ├── gateway/
-│   │   ├── app.py       # FastAPI gateway — serves UI + proxies
+│   │   ├── app.py       # FastAPI gateway — serves UI + proxies to LLM
+│   │   ├── tests.py      # Gateway tests
 │   │   └── ui/          # Static frontend files
 │   │       ├── index.html
 │   │       ├── style.css
 │   │       └── app.js
-│   ├── llm/
-│   │   ├── app.py       # LLM microservice — DeepSeek integration
-│   │   └── tests.py
-│   └── utils/
-│       ├── app.py       # Config microservice — reads config.json
+│   └── llm/
+│       ├── app.py       # LLM microservice — DeepSeek integration
 │       └── tests.py
-├── config-example.json  # Example config (template)
-├── config.json          # Local config (git-ignored)
-├── install.sh           # One-shot setup script
-├── start.sh             # Start all three services
-├── stop.sh              # Stop all three services
-└── requirements.txt     # Python dependencies
+├── .env.example          # Environment variable template
+├── .env                  # Local env vars (git-ignored)
+├── install.sh            # One-shot setup script
+├── start.sh              # Start all services
+├── stop.sh               # Stop all services
+└── requirements.txt      # Python dependencies
 ```
 
 ## Requirements

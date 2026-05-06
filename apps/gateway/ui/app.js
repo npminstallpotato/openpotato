@@ -105,7 +105,7 @@ configBtn.addEventListener("click", async () => {
   configModal.showModal();
 
   try {
-    const resp = await fetch("/api/utils/config");
+    const resp = await fetch("/api/config");
     if (!resp.ok) {
       configContent.textContent = `Error: ${resp.status} ${resp.statusText}`;
       return;

@@ -1,7 +1,7 @@
 # OpenPotato 🥔
 
 > AI agents at your command, powered by your preferred LLM — built 100% by AI.
-> Updated: 2026-05-05
+> Updated: 2026-05-06
 
 ## Project Structure
 
@@ -9,26 +9,24 @@
 OpenPotato/
 ├── apps/
 │   ├── gateway/
-│   │   ├── app.py       # FastAPI gateway — serves UI + proxies to backends
+│   │   ├── app.py       # FastAPI gateway — serves UI + proxies to LLM
+│   │   ├── tests.py  # Gateway tests
 │   │   └── ui/          # Static frontend (index.html, style.css, app.js)
-│   ├── llm/
-│   │   ├── app.py       # LLM microservice — proxied DeepSeek API calls
-│   │   └── tests.py
-│   └── utils/
-│       ├── app.py       # Config microservice — reads config.json
+│   └── llm/
+│       ├── app.py       # LLM microservice — DeepSeek API calls
 │       └── tests.py
 ├── .claude/             # Claude project settings
 ├── .config/             # Local Claude CLI config (gitignored)
+├── .env.example         # Environment variable template
+├── .env                 # Local env vars with API keys (gitignored)
 ├── CLAUDE.md            # Project memory for Claude
 ├── CONTRIBUTING.md      # Commit convention guide
 ├── LICENSE              # MIT license
 ├── README.md
-├── config-example.json  # Config template (tracked)
-├── config.json          # Local config with API keys (gitignored)
 ├── requirements.txt
-├── install.sh           # Setup script (venv + deps + config)
-├── start.sh             # Launch all three services
-└── stop.sh              # Stop all three services
+├── install.sh           # Setup script (venv + deps + .env)
+├── start.sh             # Launch services
+└── stop.sh              # Stop services
 ```
 
 ## Git Status
@@ -39,19 +37,20 @@ OpenPotato/
 
 ## Architecture
 
-Three FastAPI microservices:
+Two FastAPI microservices — each self-bootstrapping from `.env` + environment variables:
 
-| Service   | Port | Role                                      |
-|-----------|------|-------------------------------------------|
-| **Utils** | 8001 | Centralized config — reads `config.json`  |
-| **LLM**   | 8002 | Proxies chat requests to DeepSeek API     |
-| **Gateway** | 8000 | Serves the UI + proxies `/api/*` routes   |
+| Service     | Port | Role                                    |
+|-------------|------|-----------------------------------------|
+| **LLM**     | 8002 | Proxies chat requests to DeepSeek API   |
+| **Gateway** | 8000 | Serves the UI + proxies `/api/llm/*`    |
 
-Services (except Utils) fetch config from Utils at startup — never read config.json directly.
+No inter-service config dependency. Each service loads `.env` via `python-dotenv` at startup,
+reads its own config from `os.environ`, and falls back to safe defaults.
 
 ## Key Conventions
 
 - **Commit messages:** Conventional Commits (`feat:`, `fix:`, `docs:`, etc.) — lowercase, no period
-- **Python:** no bytecode (`sys.dont_write_bytecode = True`), no `__pycache__`
-- **Config:** all fallbacks are hardcoded defaults, no `os.getenv()`
-- **Tests:** each service has `tests.py`, run separately to avoid import conflicts
+- **Python:** always use `-B` flag when running Python (prevents `__pycache__`), bytecode disabled via `-B` flag in start.sh (not per-file)
+- **Config:** `.env` file loaded via `python-dotenv`, secrets never served over HTTP
+- **HTTP client:** shared `httpx.AsyncClient` attached to `app.state` in lifespan
+- **Tests:** always run separately (`pytest apps/llm/tests.py` then `pytest apps/gateway/tests.py`) — same filenames cause import collisions
