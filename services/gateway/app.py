@@ -32,6 +32,8 @@ GATEWAY_HOST = _config.get("GATEWAY_HOST", "127.0.0.1")
 LLM_HOST = _config.get("LLM_HOST", "127.0.0.1")
 LLM_PORT = int(_config.get("LLM_PORT", "8002"))
 LLM_BASE = f"http://{LLM_HOST}:{LLM_PORT}"
+UTIL_PORT = int(_config.get("UTIL_PORT", "8001"))
+UTIL_BASE = f"http://{LLM_HOST}:{UTIL_PORT}"
 INTERNAL_SECRET = _config.get("INTERNAL_SECRET", "")
 
 
@@ -151,6 +153,12 @@ async def get_config():
 @app.api_route("/api/llm/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
 async def proxy_llm(path: str, request: Request, _=Depends(check_gateway_config)):
     return await proxy(path, request, LLM_BASE)
+
+
+@app.api_route("/api/settings", methods=["GET", "PUT"])
+async def proxy_settings(request: Request):
+    """Proxy settings CRUD to the Util microservice."""
+    return await proxy("api/settings", request, UTIL_BASE)
 
 
 # ── Static files + SPA routing ─────────────────────────────────────────

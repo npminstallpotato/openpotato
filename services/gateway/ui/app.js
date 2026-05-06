@@ -32,9 +32,26 @@ const chatEl = document.getElementById("chat");
 const formEl = document.getElementById("chat-form");
 const inputEl = document.getElementById("message-input");
 const sendBtn = document.getElementById("send-btn");
-const configContent = document.getElementById("config-content");
-
 let messageCount = 0;
+
+/* ── Settings / Config ────────────────────────────────────────────────── */
+
+const DEFAULT_SETTINGS = {
+  LLM_MODEL: "deepseek-v4-flash",
+  LLM_BASE_URL: "https://api.deepseek.com/anthropic",
+  LLM_API_KEY: "",
+};
+
+const settingsForm = document.getElementById("settings-form");
+const settingsStatus = document.getElementById("settings-status");
+const saveBtn = document.getElementById("settings-save-btn");
+const restoreBtn = document.getElementById("settings-restore-btn");
+const cancelBtn = document.getElementById("settings-cancel-btn");
+const modelInput = document.getElementById("setting-model");
+const baseUrlInput = document.getElementById("setting-base-url");
+const apiKeyInput = document.getElementById("setting-api-key");
+
+let initialSettings = {};
 
 /* ── Router ────────────────────────────────────────────────────────────── */
 
@@ -62,7 +79,7 @@ function renderView(view) {
 
   // Side effects per view
   if (view === "settings") {
-    loadConfig();
+    loadSettings();
   } else if (view === "chat") {
     inputEl.focus();
   }
@@ -197,20 +214,138 @@ document.addEventListener("keydown", (e) => {
   }
 });
 
-/* ── Settings / Config ────────────────────────────────────────────────── */
+function getCurrentSettings() {
+  return {
+    LLM_MODEL: modelInput.value.trim(),
+    LLM_BASE_URL: baseUrlInput.value.trim(),
+    LLM_API_KEY: apiKeyInput.value.trim(),
+  };
+}
 
-async function loadConfig() {
-  configContent.textContent = "Loading…";
+function settingsChanged() {
+  const current = getCurrentSettings();
+  return (
+    current.LLM_MODEL !== initialSettings.LLM_MODEL ||
+    current.LLM_BASE_URL !== initialSettings.LLM_BASE_URL ||
+    current.LLM_API_KEY !== initialSettings.LLM_API_KEY
+  );
+}
 
+function updateSaveButton() {
+  const changed = settingsChanged();
+  saveBtn.disabled = !changed;
+  saveBtn.style.opacity = changed ? "" : "0.45";
+}
+
+async function loadSettings() {
+  settingsStatus.textContent = "";
+  settingsStatus.className = "settings-status";
   try {
-    const resp = await fetch("/api/config");
+    const resp = await fetch("/api/settings");
     if (!resp.ok) {
-      configContent.textContent = `Error: ${resp.status} ${resp.statusText}`;
+      settingsStatus.textContent = `Error loading settings (${resp.status})`;
+      settingsStatus.className = "settings-status error";
       return;
     }
     const data = await resp.json();
-    configContent.textContent = JSON.stringify(data, null, 2);
+    modelInput.value = data.LLM_MODEL || "";
+    baseUrlInput.value = data.LLM_BASE_URL || "";
+    apiKeyInput.value = data.LLM_API_KEY || "";
+    initialSettings = getCurrentSettings();
+    updateSaveButton();
   } catch {
-    configContent.textContent = "Network error — is the server running?";
+    settingsStatus.textContent = "Network error — is the server running?";
+    settingsStatus.className = "settings-status error";
   }
+}
+
+async function saveSettings(e) {
+  e.preventDefault();
+
+  saveBtn.blur();
+  if (!confirm("Save these settings?")) return;
+
+  saveBtn.disabled = true;
+  saveBtn.textContent = "Saving…";
+  settingsStatus.textContent = "";
+  settingsStatus.className = "settings-status";
+
+  const payload = getCurrentSettings();
+
+  try {
+    const resp = await fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      settingsStatus.textContent = err.detail || `Error saving (${resp.status})`;
+      settingsStatus.className = "settings-status error";
+      return;
+    }
+    settingsStatus.textContent = "Settings saved successfully";
+    settingsStatus.className = "settings-status success";
+    initialSettings = getCurrentSettings();
+    updateSaveButton();
+  } catch {
+    settingsStatus.textContent = "Network error — is the server running?";
+    settingsStatus.className = "settings-status error";
+  } finally {
+    saveBtn.disabled = false;
+    saveBtn.textContent = "Save Settings";
+  }
+}
+
+async function restoreDefaults() {
+  restoreBtn.blur();
+  if (!confirm("Restore default settings? This will overwrite your current values.")) return;
+
+  restoreBtn.disabled = true;
+  restoreBtn.textContent = "Restoring…";
+  settingsStatus.textContent = "";
+  settingsStatus.className = "settings-status";
+
+  try {
+    const resp = await fetch("/api/settings", {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(DEFAULT_SETTINGS),
+    });
+    if (!resp.ok) {
+      const err = await resp.json().catch(() => ({}));
+      settingsStatus.textContent = err.detail || `Error restoring (${resp.status})`;
+      settingsStatus.className = "settings-status error";
+      restoreBtn.disabled = false;
+      restoreBtn.textContent = "Restore Defaults";
+      return;
+    }
+    await loadSettings();
+    settingsStatus.textContent = "Defaults restored";
+    settingsStatus.className = "settings-status success";
+  } catch {
+    settingsStatus.textContent = "Network error — is the server running?";
+    settingsStatus.className = "settings-status error";
+  } finally {
+    restoreBtn.disabled = false;
+    restoreBtn.textContent = "Restore Defaults";
+  }
+}
+
+async function cancelEdits() {
+  cancelBtn.blur();
+  settingsStatus.textContent = "";
+  settingsStatus.className = "settings-status";
+  if (!settingsChanged() || confirm("Discard unsaved changes?")) {
+    await loadSettings();
+  }
+}
+
+if (settingsForm) {
+  settingsForm.addEventListener("submit", saveSettings);
+  restoreBtn.addEventListener("click", restoreDefaults);
+  cancelBtn.addEventListener("click", cancelEdits);
+  [modelInput, baseUrlInput, apiKeyInput].forEach((input) => {
+    input.addEventListener("input", updateSaveButton);
+  });
 }

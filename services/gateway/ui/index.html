@@ -92,19 +92,37 @@
         </header>
 
         <div class="settings-content">
-          <div class="settings-card">
-            <p class="settings-hint">
-              Configuration is loaded from <code>config.json</code> on every request.
-              Edit the file directly — changes apply immediately, no restart needed.
-            </p>
-          </div>
-          <div class="settings-card config-card">
-            <div class="config-card-header">
-              <span class="config-card-icon">⚙️</span>
-              <span>Current Configuration</span>
+          <form id="settings-form" class="settings-form">
+            <div class="settings-card settings-table-card">
+              <div class="settings-table">
+                <div class="settings-table-row">
+                  <span class="settings-table-col-key"><code>LLM_MODEL</code></span>
+                  <span class="settings-table-col-val">
+                    <input type="text" id="setting-model" class="form-input" placeholder="e.g. deepseek-v4-flash">
+                  </span>
+                </div>
+                <div class="settings-table-row">
+                  <span class="settings-table-col-key"><code>LLM_BASE_URL</code></span>
+                  <span class="settings-table-col-val">
+                    <input type="text" id="setting-base-url" class="form-input" placeholder="e.g. https://api.deepseek.com/anthropic">
+                  </span>
+                </div>
+                <div class="settings-table-row">
+                  <span class="settings-table-col-key"><code>LLM_API_KEY</code></span>
+                  <span class="settings-table-col-val">
+                    <input type="text" id="setting-api-key" class="form-input" placeholder="Enter your API key">
+                  </span>
+                </div>
+              </div>
             </div>
-            <pre id="config-content">Loading…</pre>
-          </div>
+
+            <div class="settings-actions">
+              <span id="settings-status" class="settings-status"></span>
+              <button type="button" id="settings-cancel-btn" class="btn btn-ghost">Cancel</button>
+              <button type="button" id="settings-restore-btn" class="btn btn-secondary">Restore Defaults</button>
+              <button type="submit" id="settings-save-btn" class="btn btn-primary">Save Settings</button>
+            </div>
+          </form>
         </div>
       </section>
 
