@@ -28,6 +28,7 @@ After running `./install.sh`, two files control the system:
 | `LLM_HOST` | Host the LLM service binds to (default: `127.0.0.1`) |
 | `GATEWAY_PORT` | Port the Gateway serves the UI on |
 | `GATEWAY_HOST` | Host the Gateway binds to (default: `127.0.0.1`) |
+| `UTIL_PORT` | Port the Util (settings) service runs on |
 
 ### `settings.json` — LLM provider (live-reloaded, no restart needed)
 
@@ -36,6 +37,8 @@ After running `./install.sh`, two files control the system:
 | `LLM_API_KEY` | Your DeepSeek (or compatible) API key |
 | `LLM_MODEL` | Model name (default: `deepseek-v4-flash`) |
 | `LLM_BASE_URL` | API base URL (default: `https://api.deepseek.com/anthropic`) |
+
+> **Settings can also be edited via the UI** — navigate to the Settings page (sidebar or `Cmd+,`) to view and update these values without editing files directly.
 
 ## API Endpoints
 
@@ -47,6 +50,8 @@ All requests go through the **Gateway** (`http://localhost:8000`). The LLM servi
 |--------|------|-------------|
 | `GET` | `/` | Serves the chat UI |
 | `GET` | `/api/config` | Returns current config (API key redacted) |
+| `GET` | `/api/settings` | Returns LLM provider settings (live-reloaded) |
+| `PUT` | `/api/settings` | Updates and persists LLM provider settings |
 | `*` | `/api/llm/*` | Proxies requests to the LLM service |
 
 ### LLM (via Gateway proxy)
@@ -88,6 +93,8 @@ All requests go through the **Gateway** (`http://localhost:8000`). The LLM servi
 │   │       ├── index.html
 │   │       ├── style.css
 │   │       └── app.js
+│   ├── util/
+│   │   └── app.py       # Util microservice — manages settings.json
 │   └── llm/
 │       ├── app.py       # LLM microservice — DeepSeek integration
 │       └── tests.py
