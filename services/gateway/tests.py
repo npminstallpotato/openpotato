@@ -1,7 +1,20 @@
 """Tests for the Gateway microservice."""
 
+from unittest.mock import patch
+
+from fastapi.responses import Response
 from fastapi.testclient import TestClient
 from app import app
+
+
+async def _mock_proxy_error(*args, **kwargs):
+    """Mock proxy that simulates a backend being unreachable."""
+    import json
+    return Response(
+        content=json.dumps({"error": "Backend at http://127.0.0.1:8002 unavailable"}),
+        status_code=502,
+        media_type="application/json",
+    )
 
 
 def test_static_index():
@@ -42,7 +55,7 @@ def test_config_endpoint():
 
 def test_proxy_llm_unavailable():
     """Proxying to LLM returns 502 when LLM is not running."""
-    with TestClient(app) as client:
+    with patch("app.proxy", _mock_proxy_error), TestClient(app) as client:
         response = client.get("/api/llm/health")
         assert response.status_code == 502
         data = response.json()
