@@ -93,24 +93,6 @@ async def query_llm(message: str, client: httpx.AsyncClient, config: dict) -> di
     model = config.get("LLM_MODEL", "deepseek-v4-flash")
     base_url = config.get("LLM_BASE_URL", "https://api.deepseek.com/anthropic")
 
-    if not api_key:
-        logger.warning("LLM_API_KEY not set — returning placeholder")
-        return {
-            "id": "placeholder",
-            "type": "message",
-            "role": "assistant",
-            "content": [
-                {
-                    "type": "text",
-                    "text": (
-                        f'[Placeholder] Received: "{message}". '
-                        "Set LLM_API_KEY in config.json to connect a real provider."
-                    ),
-                }
-            ],
-            "stop_reason": "end_turn",
-        }
-
     resp = await client.post(
         f"{base_url}/messages",
         headers={
