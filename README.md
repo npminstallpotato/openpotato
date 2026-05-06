@@ -1,6 +1,6 @@
 # OpenPotato 🥔
 
-A team of AI Agents, powered by your preferred LLM — built entirely by AI.
+A team of AI Agents, powered by your preferred LLM — vibe coded entirely.
 
 ## Quick Start
 
@@ -65,7 +65,7 @@ All requests go through the **Gateway** (`http://localhost:8000`). The LLM servi
 ## Project Structure
 
 ```
-├── apps/
+├── services/
 │   ├── gateway/
 │   │   ├── app.py       # FastAPI gateway — serves UI + proxies to LLM
 │   │   ├── tests.py      # Gateway tests

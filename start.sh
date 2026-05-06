@@ -7,11 +7,11 @@ cd "$ROOT"
 PYTHON=".venv/bin/python"
 
 echo "Starting LLM service…"
-$PYTHON -B apps/llm/app.py &
+$PYTHON -B services/llm/app.py &
 echo $! > /tmp/openpotato-llm.pid
 echo "  PID $(cat /tmp/openpotato-llm.pid) — http://localhost:8002"
 
 echo "Starting Gateway service…"
-$PYTHON -B apps/gateway/app.py &
+$PYTHON -B services/gateway/app.py &
 echo $! > /tmp/openpotato-gateway.pid
 echo "  PID $(cat /tmp/openpotato-gateway.pid) — http://localhost:8000"

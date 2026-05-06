@@ -6,9 +6,9 @@ cd "$ROOT"
 
 # ── Verify we're in the repo root ─────────────────────────────────────────────
 
-if [ ! -d "apps" ] || [ ! -f "requirements.txt" ]; then
+if [ ! -d "services" ] || [ ! -f "requirements.txt" ]; then
     echo "Error: install.sh must be run from the OpenPotato repository root."
-    echo "Expected to find 'apps/' and 'requirements.txt' in $(pwd)"
+    echo "Expected to find 'services/' and 'requirements.txt' in $(pwd)"
     exit 1
 fi
 

@@ -7,10 +7,10 @@
 
 ```
 OpenPotato/
-├── apps/
+├── services/
 │   ├── gateway/
 │   │   ├── app.py       # FastAPI gateway — serves UI + proxies to LLM
-│   │   ├── tests.py  # Gateway tests
+│   │   ├── tests.py     # Gateway tests
 │   │   └── ui/          # Static frontend (index.html, style.css, app.js)
 │   └── llm/
 │       ├── app.py       # LLM microservice — DeepSeek API calls
@@ -53,4 +53,4 @@ reads its own config from `os.environ`, and falls back to safe defaults.
 - **Python:** always use `-B` flag when running Python (prevents `__pycache__`), bytecode disabled via `-B` flag in start.sh (not per-file)
 - **Config:** `.env` file loaded via `python-dotenv`, secrets never served over HTTP
 - **HTTP client:** shared `httpx.AsyncClient` attached to `app.state` in lifespan
-- **Tests:** always run separately (`pytest apps/llm/tests.py` then `pytest apps/gateway/tests.py`) — same filenames cause import collisions
+- **Tests:** always run separately (`pytest services/llm/tests.py` then `pytest services/gateway/tests.py`) — same filenames cause import collisions
