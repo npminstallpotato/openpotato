@@ -78,7 +78,8 @@ async function sendMessage(text) {
     }
 
     const data = await resp.json();
-    addMessage("ai", data.reply);
+    const textBlock = data.content.find(b => b.type === "text");
+    addMessage("ai", textBlock ? textBlock.text : "No response text");
   } catch (err) {
     removeTyping();
     showError("Network error — is the server running?");
