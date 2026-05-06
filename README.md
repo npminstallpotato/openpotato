@@ -51,6 +51,7 @@ All requests go through the **Gateway** (`http://localhost:8000`). The LLM servi
 | `GET` | `/api/config` | Returns current config (API key redacted) |
 | `GET` | `/api/settings` | Returns LLM provider settings (live-reloaded) |
 | `PUT` | `/api/settings` | Updates and persists LLM provider settings |
+| `GET` | `/api/settings/defaults` | Returns default settings from `settings.example.json` |
 | `*` | `/api/llm/*` | Proxies requests to the LLM service |
 
 ### LLM (via Gateway proxy)

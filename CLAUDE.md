@@ -38,7 +38,7 @@ OpenPotato/
 
 - **Branch:** `main`
 - **Remote:** `origin` → `https://github.com/npminstallpotato/openpotato.git`
-- **Latest commit:** `refactor: use simple relative paths, remove Path(__file__) traversal`
+- **Latest commit:** `fix: prevent settings buttons flicker with fixed widths and no text change`
 
 ## Architecture
 
@@ -46,7 +46,7 @@ Three independent FastAPI microservices. Config is split into two files:
 
 | File | Contents | Read behavior |
 |------|----------|--------------|
-| `config.json` | `INTERNAL_SECRET`, ports, hosts | **Once at startup** (module level) |
+| `config.json` | `INTERNAL_SECRET`, port, host | **Once at startup** (module level) |
 | `settings.json` | `LLM_API_KEY`, `LLM_MODEL`, `LLM_BASE_URL` | **Live-reloaded** on every request |
 
 | Service     | Port | Role                                             |
