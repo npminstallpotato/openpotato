@@ -58,10 +58,17 @@ if not AUTH_REQUIRED:
 
 @app.middleware("http")
 async def auth_middleware(request: Request, call_next):
-    """Require X-API-Key header on /api/* routes if GATEWAY_API_KEY is set."""
+    """
+    Require X-API-Key on /api/* routes for external requests.
+    Same-origin requests from the browser UI are trusted automatically.
+    """
     if AUTH_REQUIRED and request.url.path.startswith("/api/"):
-        header_key = request.headers.get("x-api-key", "")
-        if header_key != GATEWAY_API_KEY:
+        origin = request.headers.get("origin", "")
+        # Same-origin = browser fetch from the UI (trusted)
+        if origin and origin == f"http://{request.url.hostname}:{request.url.port}":
+            return await call_next(request)
+        # External clients must provide the correct key
+        if request.headers.get("x-api-key", "") != GATEWAY_API_KEY:
             return JSONResponse(
                 content={"error": "Invalid or missing API key"},
                 status_code=401,
