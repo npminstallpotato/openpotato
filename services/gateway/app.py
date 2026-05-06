@@ -107,10 +107,10 @@ async def proxy(path: str, request: Request, base_url: str) -> Response:
             status_code=resp.status_code,
             headers=dict(resp.headers),
         )
-    except httpx.ConnectError:
-        logger.error("Cannot connect to %s", base_url)
+    except httpx.RequestError:
+        logger.error("Request to %s failed", base_url)
         return Response(
-            content=json.dumps({"error": f"Backend at {base_url} unavailable"}),
+            content=json.dumps({"error": f"Backend at {base_url} unreachable or timed out"}),
             status_code=502,
             media_type="application/json",
         )
