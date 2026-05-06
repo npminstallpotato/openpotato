@@ -8,7 +8,7 @@ from urllib.parse import urlencode
 
 import httpx
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
-from fastapi.staticfiles import StaticFiles
+from starlette.responses import FileResponse
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
@@ -141,9 +141,22 @@ async def proxy_llm(path: str, request: Request, _=Depends(check_gateway_config)
     return await proxy(path, request, LLM_BASE)
 
 
-# ── Static UI files (must be last — catch-all) ─────────────────────────────
+# ── Static files + SPA routing ─────────────────────────────────────────
 
-app.mount("/", StaticFiles(directory=str(UI_DIR), html=True), name="ui")
+@app.get("/{path:path}")
+async def spa_or_static(path: str):
+    """Serve static files (style.css, app.js) directly, otherwise serve
+    index.html for client-side routing (/chat, /settings, etc.)."""
+    if not path:
+        # Root "/" — serve index.html
+        return FileResponse(str(UI_DIR / "index.html"))
+    file_path = (UI_DIR / path).resolve()
+    # Prevent directory traversal
+    if not str(file_path).startswith(str(UI_DIR.resolve())):
+        return Response("Forbidden", status_code=403)
+    if file_path.is_file():
+        return FileResponse(str(file_path))
+    return FileResponse(str(UI_DIR / "index.html"))
 
 
 if __name__ == "__main__":

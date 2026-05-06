@@ -1,3 +1,27 @@
+/* ── Theme ──────────────────────────────────────────────────────────────── */
+
+function setTheme(theme) {
+  document.documentElement.setAttribute("data-theme", theme);
+  localStorage.setItem("theme", theme);
+  const icon = document.querySelector(".theme-icon");
+  if (icon) {
+    icon.textContent = theme === "dark" ? "☀️" : "🌙";
+  }
+}
+
+function toggleTheme() {
+  const current = document.documentElement.getAttribute("data-theme");
+  setTheme(current === "dark" ? "light" : "dark");
+}
+
+// Restore saved theme on load
+const savedTheme = localStorage.getItem("theme") || "light";
+setTheme(savedTheme);
+
+// Wire up toggle button
+const themeBtn = document.getElementById("theme-btn");
+if (themeBtn) themeBtn.addEventListener("click", toggleTheme);
+
 /* ── State ─────────────────────────────────────────────────────────────── */
 
 const chatEl = document.getElementById("chat");
@@ -8,26 +32,61 @@ const configContent = document.getElementById("config-content");
 
 let messageCount = 0;
 
+/* ── Router ────────────────────────────────────────────────────────────── */
+
+function getViewFromPath(path) {
+  if (path === "/settings") return "settings";
+  return "chat"; // default — also covers "/" and "/chat"
+}
+
+function navigateTo(view) {
+  const path = view === "settings" ? "/settings" : "/chat";
+  history.pushState({ view }, "", path);
+  renderView(view);
+}
+
+function renderView(view) {
+  // Update nav items
+  document.querySelectorAll(".nav-item").forEach((n) => {
+    n.classList.toggle("active", n.dataset.view === view);
+  });
+
+  // Update views
+  document.querySelectorAll(".view").forEach((v) => {
+    v.classList.toggle("active", v.id === `view-${view}`);
+  });
+
+  // Side effects per view
+  if (view === "settings") {
+    loadConfig();
+  } else if (view === "chat") {
+    inputEl.focus();
+  }
+}
+
+/* ── Initial route ────────────────────────────────────────────────────── */
+
+// Redirect "/" → "/chat"
+if (window.location.pathname === "/") {
+  history.replaceState({ view: "chat" }, "", "/chat");
+}
+
+const initialView = getViewFromPath(window.location.pathname);
+renderView(initialView);
+
+/* ── Browser navigation (back/forward) ────────────────────────────────── */
+
+window.addEventListener("popstate", () => {
+  const view = getViewFromPath(window.location.pathname);
+  renderView(view);
+});
+
 /* ── Sidebar navigation ───────────────────────────────────────────────── */
 
 document.querySelectorAll(".nav-item").forEach((item) => {
-  item.addEventListener("click", () => {
-    document
-      .querySelectorAll(".nav-item")
-      .forEach((n) => n.classList.remove("active"));
-    item.classList.add("active");
-
-    document
-      .querySelectorAll(".view")
-      .forEach((v) => v.classList.remove("active"));
-    const view = document.getElementById(`view-${item.dataset.view}`);
-    if (view) view.classList.add("active");
-
-    if (item.dataset.view === "settings") {
-      loadConfig();
-    } else if (item.dataset.view === "chat") {
-      inputEl.focus();
-    }
+  item.addEventListener("click", (e) => {
+    e.preventDefault();
+    navigateTo(item.dataset.view);
   });
 });
 
@@ -121,17 +180,16 @@ formEl.addEventListener("submit", (e) => {
   sendMessage(text);
 });
 
-/* ── Keyboard shortcut ────────────────────────────────────────────────── */
+/* ── Keyboard shortcuts ───────────────────────────────────────────────── */
 
 document.addEventListener("keydown", (e) => {
-  // Cmd/Ctrl + . switches to Settings, Cmd/Ctrl + , switches to Chat
   if ((e.metaKey || e.ctrlKey) && e.key === ".") {
     e.preventDefault();
-    document.querySelector('.nav-item[data-view="settings"]').click();
+    navigateTo("settings");
   }
   if ((e.metaKey || e.ctrlKey) && e.key === ",") {
     e.preventDefault();
-    document.querySelector('.nav-item[data-view="chat"]').click();
+    navigateTo("chat");
   }
 });
 

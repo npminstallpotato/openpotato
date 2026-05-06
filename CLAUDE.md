@@ -81,7 +81,8 @@ All other values (API keys, model names, base URLs) are fetched per-request from
 - **Config:** `config.json` file loaded per-request, secrets never served over HTTP (redacted as `***`)
 - **HTTP client:** shared `httpx.AsyncClient` attached to `app.state` in lifespan
 - **Tests:** always run separately (`pytest services/llm/tests.py` then `pytest services/gateway/tests.py`) — same filenames cause import collisions
-- **Auth:** Gateway uses same-origin trust pattern — browser requests trusted automatically, external clients need `X-API-Key` header matching `GATEWAY_API_KEY` in config.json
+- **No external auth middleware** — Gateway API routes are open (local-hosted app)
+- **Internal service auth** — LLM service only accepts requests with `X-Internal-Secret` header matching `INTERNAL_SECRET` in config.json. The Gateway adds this header automatically when proxying.
 
 ## LLM Service Details
 
@@ -89,6 +90,10 @@ All other values (API keys, model names, base URLs) are fetched per-request from
 - `max_tokens: 4096` is always sent (required by Anthropic API).
 - Returns the **full Anthropic response body** — content array may include `thinking` blocks before `text` blocks.
 - When `LLM_API_KEY` is empty/unset, returns a placeholder message instead of calling the API.
+
+## Design Conventions
+
+- **Claude Frontend Design approach** — Use warm, amber-toned aesthetic (amber-400 primary, warm-900 sidebar, Sora font). Glassmorphism, soft shadows, subtle gradients, smooth animations. Keep UI feeling premium, cozy, and potato-themed. Always maintain this design language for all new frontend work.
 
 ## Pending / Next Steps
 
