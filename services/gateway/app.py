@@ -8,13 +8,12 @@ from urllib.parse import urlencode
 
 import httpx
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
-from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-# ── Config from config.json (initial load for auth/proxy settings) ─────────
+# ── Config from config.json (initial load for proxy settings) ─────────────────
 
 CONFIG_PATH = Path("config.json")
 
@@ -31,7 +30,6 @@ GATEWAY_HOST = _config.get("GATEWAY_HOST", "127.0.0.1")
 LLM_HOST = _config.get("LLM_HOST", "127.0.0.1")
 LLM_PORT = int(_config.get("LLM_PORT", "8002"))
 LLM_BASE = f"http://{LLM_HOST}:{LLM_PORT}"
-GATEWAY_API_KEY = _config.get("GATEWAY_API_KEY", "")
 
 UI_DIR = Path("services/gateway/ui")
 
@@ -53,13 +51,6 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
-
-# ── API key auth middleware ────────────────────────────────────────────────
-
-AUTH_REQUIRED = bool(GATEWAY_API_KEY)
-
-if not AUTH_REQUIRED:
-    logger.warning("GATEWAY_API_KEY not set — API endpoints have no authentication")
 
 # ── Required config validation dependency ──────────────────────────────────
 
@@ -88,26 +79,6 @@ def check_gateway_config():
             },
         )
     return config
-
-
-@app.middleware("http")
-async def auth_middleware(request: Request, call_next):
-    """
-    Require X-API-Key on /api/* routes for external requests.
-    Same-origin requests from the browser UI are trusted automatically.
-    """
-    if AUTH_REQUIRED and request.url.path.startswith("/api/"):
-        origin = request.headers.get("origin", "")
-        # Same-origin = browser fetch from the UI (trusted)
-        if origin and origin == f"http://{request.url.hostname}:{request.url.port}":
-            return await call_next(request)
-        # External clients must provide the correct key
-        if request.headers.get("x-api-key", "") != GATEWAY_API_KEY:
-            return JSONResponse(
-                content={"error": "Invalid or missing API key"},
-                status_code=401,
-            )
-    return await call_next(request)
 
 
 async def proxy(path: str, request: Request, base_url: str) -> Response:
