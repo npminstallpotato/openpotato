@@ -6,15 +6,41 @@ const chatEl = document.getElementById("chat");
 const formEl = document.getElementById("chat-form");
 const inputEl = document.getElementById("message-input");
 const sendBtn = document.getElementById("send-btn");
-const configBtn = document.getElementById("config-btn");
-const configModal = document.getElementById("config-modal");
 const configContent = document.getElementById("config-content");
-const closeConfig = document.getElementById("close-config");
+
+/* ── Sidebar navigation ────────────────────────────────────────────────── */
+
+document.querySelectorAll(".nav-item").forEach((item) => {
+  item.addEventListener("click", () => {
+    // Update active nav item
+    document
+      .querySelectorAll(".nav-item")
+      .forEach((n) => n.classList.remove("active"));
+    item.classList.add("active");
+
+    // Switch active view
+    document
+      .querySelectorAll(".view")
+      .forEach((v) => v.classList.remove("active"));
+    const view = document.getElementById(`view-${item.dataset.view}`);
+    if (view) view.classList.add("active");
+
+    // Load settings content when switching to settings
+    if (item.dataset.view === "settings") {
+      loadConfig();
+    }
+
+    // Focus input when switching to chat
+    if (item.dataset.view === "chat") {
+      inputEl.focus();
+    }
+  });
+});
 
 /* ── Helpers ──────────────────────────────────────────────────────────── */
 
 function scrollBottom() {
-  chatEl.parentElement.scrollTop = chatEl.parentElement.scrollHeight;
+  chatEl.scrollTop = chatEl.scrollHeight;
 }
 
 function escapeHtml(text) {
@@ -78,7 +104,7 @@ async function sendMessage(text) {
     }
 
     const data = await resp.json();
-    const textBlock = data.content.find(b => b.type === "text");
+    const textBlock = data.content.find((b) => b.type === "text");
     addMessage("ai", textBlock ? textBlock.text : "No response text");
   } catch (err) {
     removeTyping();
@@ -99,11 +125,10 @@ formEl.addEventListener("submit", (e) => {
   sendMessage(text);
 });
 
-/* ── Config modal ──────────────────────────────────────────────────────── */
+/* ── Settings / Config ─────────────────────────────────────────────────── */
 
-configBtn.addEventListener("click", async () => {
+async function loadConfig() {
   configContent.textContent = "Loading…";
-  configModal.showModal();
 
   try {
     const resp = await fetch("/api/config");
@@ -116,9 +141,4 @@ configBtn.addEventListener("click", async () => {
   } catch {
     configContent.textContent = "Network error — is the server running?";
   }
-});
-
-closeConfig.addEventListener("click", () => configModal.close());
-configModal.addEventListener("click", (e) => {
-  if (e.target === configModal) configModal.close();
-});
+}

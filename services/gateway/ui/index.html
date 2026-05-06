@@ -8,35 +8,74 @@
 </head>
 <body>
   <div id="app">
-    <header>
-      <h1>OpenPotato</h1>
-      <button id="config-btn" title="Show config">⚙</button>
-    </header>
+    <!-- Sidebar -->
+    <aside id="sidebar">
+      <div class="brand">
+        <span class="logo">🥔</span>
+        <div class="brand-text">
+          <h1>OpenPotato</h1>
+          <span class="version">v0.1.0</span>
+        </div>
+      </div>
 
-    <main>
-      <div id="chat" role="log" aria-label="Chat messages">
-        <div class="message system">
-          <div class="bubble">Connected. Type a message to start chatting.</div>
+      <nav id="sidebar-nav">
+        <a class="nav-item active" data-view="chat">
+          <span class="nav-icon">💬</span>
+          <span class="nav-label">Chat</span>
+        </a>
+        <a class="nav-item" data-view="settings">
+          <span class="nav-icon">⚙️</span>
+          <span class="nav-label">Settings</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="status">
+          <span class="status-dot"></span>
+          <span class="status-text">Connected</span>
+        </div>
+        <span class="status-port">localhost:8000</span>
+      </div>
+    </aside>
+
+    <!-- Main Content -->
+    <main id="main">
+      <!-- Chat View -->
+      <div id="view-chat" class="view active">
+        <header class="view-header">
+          <h2>💬 Chat</h2>
+        </header>
+
+        <div id="chat" role="log" aria-label="Chat messages">
+          <div class="message system">
+            <div class="bubble">Connected. Type a message to start chatting.</div>
+          </div>
+        </div>
+
+        <footer class="input-area">
+          <form id="chat-form">
+            <input type="text" id="message-input" placeholder="Type a message…" autofocus required>
+            <button type="submit" id="send-btn">Send</button>
+          </form>
+        </footer>
+      </div>
+
+      <!-- Settings View -->
+      <div id="view-settings" class="view">
+        <header class="view-header">
+          <h2>⚙️ Settings</h2>
+        </header>
+
+        <div class="settings-content">
+          <p class="settings-hint">
+            Configuration loaded from <code>config.json</code>.
+            Changes apply on the next request — no restart needed.
+          </p>
+          <pre id="config-content">Loading…</pre>
         </div>
       </div>
     </main>
-
-    <footer>
-      <form id="chat-form">
-        <input type="text" id="message-input" placeholder="Type a message…" autofocus required>
-        <button type="submit" id="send-btn">Send</button>
-      </form>
-    </footer>
   </div>
-
-  <!-- Config modal -->
-  <dialog id="config-modal">
-    <header>
-      <h2>Config</h2>
-      <button id="close-config" aria-label="Close">&times;</button>
-    </header>
-    <pre id="config-content">Loading…</pre>
-  </dialog>
 
   <script src="/app.js"></script>
 </body>
