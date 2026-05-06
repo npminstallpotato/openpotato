@@ -7,7 +7,7 @@ from pathlib import Path
 from urllib.parse import urlencode
 
 import httpx
-from fastapi import FastAPI, Request, Response
+from fastapi import Depends, FastAPI, HTTPException, Request, Response
 from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
@@ -60,6 +60,34 @@ AUTH_REQUIRED = bool(GATEWAY_API_KEY)
 
 if not AUTH_REQUIRED:
     logger.warning("GATEWAY_API_KEY not set — API endpoints have no authentication")
+
+# ── Required config validation dependency ──────────────────────────────────
+
+GATEWAY_REQUIRED_KEYS = ["LLM_HOST", "LLM_PORT"]
+
+
+def check_gateway_config():
+    """FastAPI dependency: verify the Gateway has the config it needs to proxy.
+
+    LLM_HOST and LLM_PORT are required for the proxy to know where the LLM
+    service lives.  If config.json is missing or incomplete, returns 503.
+    """
+    config = {}
+    if CONFIG_PATH.exists():
+        with open(CONFIG_PATH) as f:
+            config = json.load(f)
+
+    missing = [key for key in GATEWAY_REQUIRED_KEYS if not config.get(key)]
+    if missing:
+        raise HTTPException(
+            status_code=503,
+            detail={
+                "error": "Gateway configuration incomplete",
+                "missing_keys": missing,
+                "hint": f"Set {', '.join(missing)} in config.json",
+            },
+        )
+    return config
 
 
 @app.middleware("http")
@@ -120,7 +148,7 @@ async def proxy(path: str, request: Request, base_url: str) -> Response:
 # ── Config endpoint (for UI — live-reloads config.json) ────────────────────
 
 @app.get("/api/config")
-async def get_config():
+async def get_config(_=Depends(check_gateway_config)):
     """Return the current config (API key redacted)."""
     config = {}
     if CONFIG_PATH.exists():
@@ -141,7 +169,7 @@ async def get_config():
 # ── API Proxy routes ───────────────────────────────────────────────────────
 
 @app.api_route("/api/llm/{path:path}", methods=["GET", "POST", "PUT", "DELETE", "PATCH"])
-async def proxy_llm(path: str, request: Request):
+async def proxy_llm(path: str, request: Request, _=Depends(check_gateway_config)):
     return await proxy(path, request, LLM_BASE)
 
 

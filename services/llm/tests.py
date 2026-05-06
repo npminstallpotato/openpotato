@@ -8,7 +8,11 @@ def test_health():
     with TestClient(app) as client:
         response = client.get("/health")
         assert response.status_code == 200
-        assert response.json() == {"status": "ok", "model": "deepseek-v4-flash"}
+        data = response.json()
+        assert data["status"] == "ok"
+        assert data["model"] == "deepseek-v4-flash"
+        assert data["config_valid"] is True
+        assert data["missing_keys"] == []
 
 
 def _assert_anthropic_response(data):

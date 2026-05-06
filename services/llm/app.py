@@ -10,7 +10,7 @@ from contextlib import asynccontextmanager
 from pathlib import Path
 
 import httpx
-from fastapi import FastAPI, Query, Request
+from fastapi import Depends, FastAPI, HTTPException, Query, Request
 from pydantic import BaseModel
 
 logging.basicConfig(level=logging.INFO)
@@ -34,6 +34,33 @@ if CONFIG_PATH.exists():
     logger.info("Config loaded from %s", CONFIG_PATH)
 else:
     logger.warning("config.json not found at %s — using defaults", CONFIG_PATH)
+
+# ── Required config keys (validated on every API call) ─────────────────────
+
+REQUIRED_KEYS = {
+    "LLM_API_KEY": "API key for the LLM provider",
+    "LLM_MODEL": "Model name (e.g. deepseek-v4-flash)",
+    "LLM_BASE_URL": "API base URL (e.g. https://api.deepseek.com/anthropic)",
+}
+
+
+def check_config():
+    """FastAPI dependency: verify all required config values are present and non-empty.
+
+    Returns the config dict on success, raises HTTPException(503) on failure.
+    Applied to every chat endpoint — ensures no request reaches the LLM provider
+    with missing configuration.
+    """
+    config = load_config()
+    missing = [key for key in REQUIRED_KEYS if not config.get(key)]
+    if missing:
+        detail = {
+            "error": "Service unavailable — missing required configuration",
+            "missing_keys": missing,
+            "hint": f"Set {', '.join(missing)} in config.json and restart or refresh",
+        }
+        raise HTTPException(status_code=503, detail=detail)
+    return config
 
 # ── Lifespan — shared HTTP client ──────────────────────────────────────────
 
@@ -118,13 +145,20 @@ async def query_llm(message: str, client: httpx.AsyncClient) -> dict:
 
 @app.get("/health")
 async def health():
+    """Return service health and config validation status."""
     config = load_config()
     model = config.get("LLM_MODEL", "deepseek-v4-flash")
-    return {"status": "ok", "model": model}
+    missing = [key for key in REQUIRED_KEYS if not config.get(key)]
+    return {
+        "status": "unhealthy" if missing else "ok",
+        "model": model,
+        "config_valid": len(missing) == 0,
+        "missing_keys": missing,
+    }
 
 
 @app.post("/chat")
-async def chat(body: ChatRequest, request: Request):
+async def chat(body: ChatRequest, request: Request, _=Depends(check_config)):
     logger.info("chat request: %s", body.message[:80])
     return await query_llm(body.message, request.app.state.client)
 
@@ -133,6 +167,7 @@ async def chat(body: ChatRequest, request: Request):
 async def chat_get(
     message: str = Query(..., description="Message to send"),
     request: Request = None,
+    _=Depends(check_config),
 ):
     logger.info("chat GET request: %s", message[:80])
     return await query_llm(message, request.app.state.client)
