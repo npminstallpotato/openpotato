@@ -55,10 +55,18 @@ All requests go through the **Gateway** (`http://localhost:8000`). The LLM servi
 { "message": "Hello, world!" }
 ```
 
-**Chat response:**
+**Chat response (Anthropic message format):**
 
 ```json
-{ "reply": "Hello! How can I help you today?" }
+{
+  "id": "msg_01abc123",
+  "type": "message",
+  "role": "assistant",
+  "content": [
+    { "type": "text", "text": "Hello! How can I help you today?" }
+  ],
+  "stop_reason": "end_turn"
+}
 ```
 
 ## Project Structure
