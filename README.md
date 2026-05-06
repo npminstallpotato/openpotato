@@ -84,10 +84,6 @@ All requests go through the **Gateway** (`http://localhost:8000`). The LLM servi
 └── requirements.txt      # Python dependencies
 ```
 
-## Requirements
-
-- **Python 3.10+**
-
 ---
 
 [MIT License](LICENSE) · [Contributing](CONTRIBUTING.md)
