@@ -16,7 +16,7 @@ logger = logging.getLogger(__name__)
 
 # ── Config from config.json (initial load for auth/proxy settings) ─────────
 
-CONFIG_PATH = Path(__file__).resolve().parent.parent.parent / "config.json"
+CONFIG_PATH = Path("config.json")
 
 _config = {}
 if CONFIG_PATH.exists():
@@ -33,7 +33,7 @@ LLM_PORT = int(_config.get("LLM_PORT", "8002"))
 LLM_BASE = f"http://{LLM_HOST}:{LLM_PORT}"
 GATEWAY_API_KEY = _config.get("GATEWAY_API_KEY", "")
 
-UI_DIR = Path(__file__).resolve().parent / "ui"
+UI_DIR = Path("services/gateway/ui")
 
 # ── Lifespan — shared HTTP client ──────────────────────────────────────────
 

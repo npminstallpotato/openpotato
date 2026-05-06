@@ -18,7 +18,7 @@ logger = logging.getLogger(__name__)
 
 # ── Config from config.json (live-reloaded on every request) ───────────────
 
-CONFIG_PATH = Path(__file__).resolve().parent.parent.parent / "config.json"
+CONFIG_PATH = Path("config.json")
 
 def load_config():
     """Read config.json and return as dict. Returns {} on error."""

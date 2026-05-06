@@ -7,7 +7,7 @@ from fastapi.testclient import TestClient
 from app import app
 
 # Read the actual API key from config.json so tests stay in sync
-_config_path = Path(__file__).resolve().parent.parent.parent / "config.json"
+_config_path = Path("config.json")
 if _config_path.exists():
     with open(_config_path) as f:
         _cfg = json.load(f)
