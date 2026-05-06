@@ -2,6 +2,8 @@
 
 import os
 
+# Disable auth + API key for tests so they don't depend on .env
+os.environ["GATEWAY_API_KEY"] = ""
 os.environ["LLM_API_KEY"] = ""
 
 from fastapi.testclient import TestClient
@@ -51,3 +53,34 @@ def test_proxy_llm_unavailable():
         assert response.status_code == 502
         data = response.json()
         assert "error" in data
+
+
+def test_auth_required():
+    """API routes reject requests without the correct X-API-Key."""
+    # Test with key set via env
+    os.environ["GATEWAY_API_KEY"] = "test-key"
+    # Reimport app module to pick up new env
+    import importlib
+    import app as gateway_app
+    importlib.reload(gateway_app)
+    app2 = gateway_app.app
+
+    with TestClient(app2) as client:
+        # No key → 401
+        resp = client.get("/api/config")
+        assert resp.status_code == 401
+
+        # Wrong key → 401
+        resp = client.get("/api/config", headers={"X-API-Key": "wrong"})
+        assert resp.status_code == 401
+
+        # Correct key → 200
+        resp = client.get("/api/config", headers={"X-API-Key": "test-key"})
+        assert resp.status_code == 200
+
+        # Static files still open without key
+        resp = client.get("/")
+        assert resp.status_code == 200
+
+    # Reset for other tests
+    os.environ["GATEWAY_API_KEY"] = ""

@@ -10,6 +10,7 @@ from urllib.parse import urlencode
 import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, Request, Response
+from fastapi.responses import JSONResponse
 from fastapi.staticfiles import StaticFiles
 
 logging.basicConfig(level=logging.INFO)
@@ -46,6 +47,26 @@ app = FastAPI(
     version="0.1.0",
     lifespan=lifespan,
 )
+
+# ── API key auth middleware ────────────────────────────────────────────────
+
+AUTH_REQUIRED = bool(GATEWAY_API_KEY)
+
+if not AUTH_REQUIRED:
+    logger.warning("GATEWAY_API_KEY not set — API endpoints have no authentication")
+
+
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
+    """Require X-API-Key header on /api/* routes if GATEWAY_API_KEY is set."""
+    if AUTH_REQUIRED and request.url.path.startswith("/api/"):
+        header_key = request.headers.get("x-api-key", "")
+        if header_key != GATEWAY_API_KEY:
+            return JSONResponse(
+                content={"error": "Invalid or missing API key"},
+                status_code=401,
+            )
+    return await call_next(request)
 
 
 async def proxy(path: str, request: Request, base_url: str) -> Response:

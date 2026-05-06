@@ -28,7 +28,7 @@ After running `./install.sh`, edit `.env` with your settings:
 | `GATEWAY_PORT` | Port the Gateway serves the UI on |
 | `LLM_HOST` | Host the LLM service binds to (default: `127.0.0.1`) |
 | `GATEWAY_HOST` | Host the Gateway binds to (default: `127.0.0.1`) |
-| `GATEWAY_API_KEY` | Optional API key for gateway authentication |
+| `GATEWAY_API_KEY` | API key for gateway auth (`X-API-Key` header), empty = no auth |
 
 ## API Endpoints
 
