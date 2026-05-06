@@ -114,7 +114,7 @@ configBtn.addEventListener("click", async () => {
     const data = await resp.json();
     configContent.textContent = JSON.stringify(data, null, 2);
   } catch {
-    configContent.textContent = "Network error — is the utils service running?";
+    configContent.textContent = "Network error — is the server running?";
   }
 });
 
