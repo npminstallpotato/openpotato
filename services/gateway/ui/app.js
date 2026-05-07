@@ -162,7 +162,7 @@ async function sendMessage(text) {
     const resp = await fetch("/api/llm/chat", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ message: text }),
+      body: JSON.stringify({ message: text, session_name: "test" }),
     });
 
     removeTyping();
@@ -174,8 +174,7 @@ async function sendMessage(text) {
     }
 
     const data = await resp.json();
-    const textBlock = data.content.find((b) => b.type === "text");
-    addMessage("ai", textBlock ? textBlock.text : "No response text");
+    addMessage("ai", data.result || "No response text");
   } catch (err) {
     removeTyping();
     showError("Network error — is the server running?");

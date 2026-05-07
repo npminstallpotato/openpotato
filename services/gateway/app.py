@@ -121,7 +121,7 @@ async def proxy(path: str, request: Request, base_url: str) -> Response:
         k: v for k, v in request.headers.items()
         if k.lower() not in ("host", "content-length")
     }
-    headers["x-internal-secret"] = INTERNAL_SECRET
+    headers["x-api-key"] = INTERNAL_SECRET
 
     body = await request.body()
 
@@ -209,20 +209,23 @@ async def get_default_settings():
 
 # ── Static files + SPA routing ─────────────────────────────────────────
 
+NO_CACHE = {"Cache-Control": "no-cache, must-revalidate"}
+
+
 @app.get("/{path:path}")
 async def spa_or_static(path: str):
     """Serve static files (style.css, app.js) directly, otherwise serve
     index.html for client-side routing (/chat, /settings, etc.)."""
     if not path:
         # Root "/" — serve index.html
-        return FileResponse(str(UI_DIR / "index.html"))
+        return FileResponse(str(UI_DIR / "index.html"), headers=NO_CACHE)
     file_path = (UI_DIR / path).resolve()
     # Prevent directory traversal
     if not str(file_path).startswith(str(UI_DIR.resolve())):
         return Response("Forbidden", status_code=403)
     if file_path.is_file():
-        return FileResponse(str(file_path))
-    return FileResponse(str(UI_DIR / "index.html"))
+        return FileResponse(str(file_path), headers=NO_CACHE)
+    return FileResponse(str(UI_DIR / "index.html"), headers=NO_CACHE)
 
 
 if __name__ == "__main__":
