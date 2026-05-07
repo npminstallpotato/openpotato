@@ -27,7 +27,6 @@ After running `./scripts/install.sh`, two files control the system:
 | `HOST` | Host all services bind to (default: `127.0.0.1`) |
 | `GATEWAY_PORT` | Port the Gateway serves the UI on |
 | `LLM_PORT` | Port the LLM service runs on |
-| `UTIL_PORT` | Port the Util (settings) service runs on |
 
 ### `settings.json` — LLM provider (live-reloaded, no restart needed)
 
@@ -93,8 +92,6 @@ All requests go through the **Gateway** (`http://localhost:8000`). The LLM servi
 │   │       ├── index.html
 │   │       ├── style.css
 │   │       └── app.js
-│   ├── util/
-│   │   └── app.py       # Util microservice — manages settings.json
 │   └── llm/
 │       ├── app.py       # LLM microservice — DeepSeek integration
 │       └── tests.py

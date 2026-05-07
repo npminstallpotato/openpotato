@@ -8,6 +8,7 @@ from urllib.parse import urlencode
 
 import httpx
 from fastapi import Depends, FastAPI, HTTPException, Request, Response
+from pydantic import BaseModel
 from starlette.responses import FileResponse
 
 logging.basicConfig(level=logging.INFO)
@@ -31,18 +32,33 @@ HOST = _config.get("HOST", "127.0.0.1")
 GATEWAY_PORT = int(_config.get("GATEWAY_PORT", "8000"))
 LLM_PORT = int(_config.get("LLM_PORT", "8002"))
 LLM_BASE = f"http://{HOST}:{LLM_PORT}"
-UTIL_PORT = int(_config.get("UTIL_PORT", "8001"))
-UTIL_BASE = f"http://{HOST}:{UTIL_PORT}"
 INTERNAL_SECRET = _config.get("INTERNAL_SECRET", "")
+
+SETTINGS_KEYS = ["LLM_API_KEY", "LLM_MODEL", "LLM_BASE_URL"]
+DEFAULT_SETTINGS = {
+    "LLM_API_KEY": "",
+    "LLM_MODEL": "deepseek-v4-flash",
+    "LLM_BASE_URL": "https://api.deepseek.com/anthropic",
+}
+DEFAULTS_PATH = Path("settings.example.json")
 
 
 def load_settings() -> dict:
-    """Read settings.json (live-reloaded on every call)."""
+    """Read settings.json (live-reloaded on every call), merged with defaults."""
     try:
         with open(SETTINGS_PATH) as f:
-            return json.load(f)
+            return {**DEFAULT_SETTINGS, **json.load(f)}
     except (FileNotFoundError, json.JSONDecodeError):
-        return {}
+        return dict(DEFAULT_SETTINGS)
+
+
+def save_settings(data: dict):
+    """Write settings.json, preserving only known keys."""
+    cleaned = {k: data[k] for k in SETTINGS_KEYS if k in data}
+    with open(SETTINGS_PATH, "w") as f:
+        json.dump(cleaned, f, indent=2)
+        f.write("\n")
+    logger.info("Settings saved to %s", SETTINGS_PATH)
 
 UI_DIR = Path("services/gateway/ui")
 
@@ -154,16 +170,41 @@ async def proxy_llm(path: str, request: Request, _=Depends(check_gateway_config)
     return await proxy(path, request, LLM_BASE)
 
 
-@app.api_route("/api/settings", methods=["GET", "PUT"])
-async def proxy_settings(request: Request):
-    """Proxy settings CRUD to the Util microservice."""
-    return await proxy("api/settings", request, UTIL_BASE)
+class SettingsUpdate(BaseModel):
+    LLM_API_KEY: str = ""
+    LLM_MODEL: str = ""
+    LLM_BASE_URL: str = ""
+
+
+@app.get("/api/settings")
+async def get_settings():
+    """Return current settings."""
+    settings = load_settings()
+    return {
+        "LLM_MODEL": settings.get("LLM_MODEL", ""),
+        "LLM_BASE_URL": settings.get("LLM_BASE_URL", ""),
+        "LLM_API_KEY": settings.get("LLM_API_KEY", ""),
+    }
+
+
+@app.put("/api/settings")
+async def put_settings(body: SettingsUpdate):
+    """Update and persist settings.json."""
+    current = load_settings()
+    current.update(body.model_dump(exclude_unset=True))
+    save_settings(current)
+    return {"status": "ok", "message": "Settings saved"}
 
 
 @app.get("/api/settings/defaults")
-async def proxy_settings_defaults(request: Request):
-    """Proxy default settings request to the Util microservice."""
-    return await proxy("api/settings/defaults", request, UTIL_BASE)
+async def get_default_settings():
+    """Return default settings from settings.example.json."""
+    try:
+        with open(DEFAULTS_PATH) as f:
+            defaults = json.load(f)
+    except (FileNotFoundError, json.JSONDecodeError):
+        defaults = dict(DEFAULT_SETTINGS)
+    return defaults
 
 
 # ── Static files + SPA routing ─────────────────────────────────────────

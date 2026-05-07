@@ -13,7 +13,7 @@ if [ ! -f "$PYTHON" ]; then
 fi
 
 # Check port availability
-for port in 8000 8001 8002; do
+for port in 8000 8002; do
     if lsof -i :"$port" &>/dev/null 2>&1; then
         echo "Warning: port $port is already in use — service may fail to bind"
     fi
@@ -24,11 +24,6 @@ $PYTHON -B services/llm/app.py &
 echo $! > /tmp/openpotato-llm.pid
 echo "  PID $(cat /tmp/openpotato-llm.pid) — http://localhost:8002"
 
-echo "Starting Util service…"
-$PYTHON -B services/util/app.py &
-echo $! > /tmp/openpotato-util.pid
-echo "  PID $(cat /tmp/openpotato-util.pid) — http://localhost:8001"
-
 echo "Starting Gateway service…"
 $PYTHON -B services/gateway/app.py &
 echo $! > /tmp/openpotato-gateway.pid
@@ -38,12 +33,6 @@ echo "  PID $(cat /tmp/openpotato-gateway.pid) — http://localhost:8000"
 sleep 2
 echo
 echo "Checking services…"
-if curl -sf http://127.0.0.1:8001/health >/dev/null 2>&1; then
-    echo "  ✓ Util service is healthy"
-else
-    echo "  ✗ Util service not ready yet — check logs for errors"
-fi
-
 if curl -sf http://127.0.0.1:8000/api/llm/health >/dev/null 2>&1; then
     echo "  ✓ LLM service is healthy (via Gateway)"
 else

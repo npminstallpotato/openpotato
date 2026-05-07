@@ -12,8 +12,6 @@ OpenPotato/
 │   │   ├── app.py       # FastAPI gateway — serves UI + proxies to LLM
 │   │   ├── tests.py     # Gateway tests
 │   │   └── ui/          # Static frontend (index.html, style.css, app.js)
-│   ├── util/
-│   │   └── app.py       # Util microservice — manages settings.json CRUD
 │   └── llm/
 │       ├── app.py       # LLM microservice — DeepSeek API calls via Anthropic format
 │       └── tests.py
@@ -43,7 +41,7 @@ OpenPotato/
 
 ## Architecture
 
-Three independent FastAPI microservices. Config is split into two files:
+Two independent FastAPI microservices. Config is split into two files:
 
 | File | Contents | Read behavior |
 |------|----------|--------------|
@@ -53,8 +51,7 @@ Three independent FastAPI microservices. Config is split into two files:
 | Service     | Port | Role                                             |
 |-------------|------|--------------------------------------------------|
 | **LLM**     | 8002 | Proxies chat requests to DeepSeek API            |
-| **Util**    | 8001 | Manages `settings.json` CRUD (read/write/persist) |
-| **Gateway** | 8000 | Serves the UI + proxies `/api/llm/*` and `/api/settings` |
+| **Gateway** | 8000 | Serves the UI + proxies `/api/llm/*` and manages `/api/settings` |
 
 No inter-service config dependency. Each service reads files from the project root
 (via simple `Path("config.json")` / `Path("settings.json")` relative paths — guaranteed by `scripts/start.sh` which `cd`s into
@@ -103,7 +100,3 @@ directly into a Python dict.
 ## Design Conventions
 
 - **Claude Frontend Design approach** — Use warm, amber-toned aesthetic (amber-400 primary, warm-900 sidebar, Sora font). Glassmorphism, soft shadows, subtle gradients, smooth animations. Keep UI feeling premium, cozy, and potato-themed. Always maintain this design language for all new frontend work.
-
-## Pending / Next Steps
-
-- ~~**Settings UI** — The user's stated goal: "the user should not make any manual changes through the files, the user only use the ui." This means building a Settings page in the frontend + `PUT /api/settings` endpoint in the Gateway. Currently settings are edited by hand in `settings.json`.~~ ✅ Done — Settings page with live-reload from Util microservice, `/api/settings` GET/PUT endpoints, and frontend form with save/restore/cancel.
