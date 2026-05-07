@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-ROOT="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$ROOT"
 
 PYTHON=".venv/bin/python"
 
 if [ ! -f "$PYTHON" ]; then
     echo "Error: virtual environment not found at $PYTHON"
-    echo "Run ./install.sh first to set up dependencies."
+    echo "Run ./scripts/install.sh first to set up dependencies."
     exit 1
 fi
 

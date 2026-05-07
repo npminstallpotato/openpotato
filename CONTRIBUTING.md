@@ -27,7 +27,7 @@ fix: handle missing config key gracefully
 docs: update README with quick start
 refactor: extract proxy logic into shared helper
 test: add LLM service tests
-chore: add install.sh setup script
+chore: add scripts/install.sh setup script
 ```
 
 Keep the summary under 72 characters. Use lowercase. No period at the end.

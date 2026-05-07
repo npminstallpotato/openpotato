@@ -117,7 +117,7 @@ echo
 
 echo -e "${BOLD}Installation complete!${NC}"
 echo
-echo -e "  ${GREEN}▶${NC} Start all services:     ${BOLD}./start.sh${NC}"
+echo -e "  ${GREEN}▶${NC} Start all services:     ${BOLD}./scripts/start.sh${NC}"
 echo -e "  ${GREEN}▶${NC} Open in browser:        ${BOLD}http://localhost:8000${NC}"
-echo -e "  ${GREEN}▶${NC} Stop all services:      ${BOLD}./stop.sh${NC}"
+echo -e "  ${GREEN}▶${NC} Stop all services:      ${BOLD}./scripts/stop.sh${NC}"
 echo

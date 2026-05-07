@@ -6,10 +6,10 @@ A team of AI Agents, powered by your preferred LLM — vibe coded entirely.
 
 ```bash
 # 1. Install
-./install.sh
+./scripts/install.sh
 
 # 2. Start all services
-./start.sh
+./scripts/start.sh
 
 # 3. Open in browser
 open http://localhost:8000
@@ -17,7 +17,7 @@ open http://localhost:8000
 
 ## Configuration
 
-After running `./install.sh`, two files control the system:
+After running `./scripts/install.sh`, two files control the system:
 
 ### `config.json` — Infrastructure / secrets (read once at startup)
 
@@ -102,11 +102,12 @@ All requests go through the **Gateway** (`http://localhost:8000`). The LLM servi
 ├── config.example.json      # Config template
 ├── settings.json            # LLM provider settings (gitignored)
 ├── settings.example.json    # Settings template
-├── install.sh               # One-shot setup script
-├── start.sh                 # Start all services
-├── stop.sh                  # Stop all services
-├── restart.sh               # Restart all services
-└── requirements.txt      # Python dependencies
+├── scripts/
+│   ├── install.sh           # One-shot setup script
+│   ├── start.sh             # Start all services
+│   ├── stop.sh              # Stop all services
+│   └── restart.sh           # Restart all services
+├── requirements.txt      # Python dependencies
 ```
 
 ---

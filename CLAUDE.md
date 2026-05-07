@@ -28,10 +28,11 @@ OpenPotato/
 ├── LICENSE              # MIT license
 ├── README.md
 ├── requirements.txt
-├── install.sh           # Setup script (venv + deps + config.json, settings.json)
-├── start.sh             # Launch services
-├── stop.sh              # Stop services
-└── restart.sh           # Restart services
+├── scripts/
+│   ├── install.sh           # Setup script (venv + deps + config.json, settings.json)
+│   ├── start.sh             # Launch services
+│   ├── stop.sh              # Stop services
+│   └── restart.sh           # Restart services
 ```
 
 ## Git Status
@@ -56,7 +57,7 @@ Three independent FastAPI microservices. Config is split into two files:
 | **Gateway** | 8000 | Serves the UI + proxies `/api/llm/*` and `/api/settings` |
 
 No inter-service config dependency. Each service reads files from the project root
-(via simple `Path("config.json")` / `Path("settings.json")` relative paths — guaranteed by `start.sh` which `cd`s into
+(via simple `Path("config.json")` / `Path("settings.json")` relative paths — guaranteed by `scripts/start.sh` which `cd`s into
 the project root before launching services). No `os.environ` injection — config is read
 directly into a Python dict.
 
